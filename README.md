@@ -3,6 +3,10 @@
 Flutter client for [BullDozer](https://shpara.com/bulldozer) — the world in numbers.
 Same pattern as the Ativa app: a thin mobile shell over the site's public JSON endpoints.
 
+> **License / usage.** This repository is public for portfolio and transparency
+> only — it is **not** open source. All rights reserved; reuse or redistribution
+> is not permitted. See [LICENSE](LICENSE).
+
 ## Tabs
 
 - **Home** — brand hero, featured happiness card (live), quick stats.
