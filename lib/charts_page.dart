@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'catalog_store.dart';
+import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
+import 'widgets/featured_card.dart';
 import 'widgets/trend_chart.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
@@ -48,7 +50,13 @@ class ChartsPage extends StatefulWidget {
   final String title;
   final String? kind; // 'macro' | 'survey'
   final List<String>? slugs; // curated set, overrides kind (Biz)
-  const ChartsPage({super.key, required this.title, this.kind, this.slugs});
+  final String? featuredSlug; // dataset shown as a featured hero on top
+  const ChartsPage(
+      {super.key,
+      required this.title,
+      this.kind,
+      this.slugs,
+      this.featuredSlug});
 
   @override
   State<ChartsPage> createState() => _ChartsPageState();
@@ -57,6 +65,27 @@ class ChartsPage extends StatefulWidget {
 class _ChartsPageState extends State<ChartsPage> {
   String _query = '';
   String _topic = 'all';
+  List<Observation> _featTop = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeatured();
+  }
+
+  Future<void> _loadFeatured() async {
+    final slug = widget.featuredSlug;
+    if (slug == null) return;
+    try {
+      final ds = await fetchDataset(slug);
+      final last = ds.periods.last;
+      final rows = ds.data.where((o) => o.period == last).toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      if (mounted) setState(() => _featTop = rows.take(6).toList());
+    } catch (_) {
+      // hero is decorative
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,12 +160,38 @@ class _ChartsPageState extends State<ChartsPage> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-            itemCount: shown.length,
-            itemBuilder: (_, i) {
-              final e = shown[i];
-              return Card(
+          child: Builder(builder: (context) {
+            final featEntry = widget.featuredSlug != null
+                ? catalogBySlug[widget.featuredSlug]
+                : null;
+            final showFeatured = featEntry != null &&
+                _featTop.isNotEmpty &&
+                _query.isEmpty &&
+                _topic == 'all';
+            final headers = showFeatured ? 1 : 0;
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              itemCount: shown.length + headers,
+              itemBuilder: (_, idx) {
+                if (showFeatured && idx == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+                    child: FeaturedCard(
+                      tag: 'Featured · ${featEntry.source}',
+                      title: '${_featTop.first.entity} tops ${featEntry.title}',
+                      bars: [
+                        for (final o in _featTop)
+                          ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+                      ],
+                      footer: 'See the full ranking →',
+                      onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => DatasetPage(entry: featEntry))),
+                    ),
+                  );
+                }
+                final e = shown[idx - headers];
+                return Card(
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 child: ListTile(
                   dense: true,
@@ -155,8 +210,9 @@ class _ChartsPageState extends State<ChartsPage> {
                       builder: (_) => DatasetPage(entry: e))),
                 ),
               );
-            },
-          ),
+              },
+            );
+          }),
         ),
       ],
     );

@@ -9,7 +9,10 @@ Same pattern as the Ativa app: a thin mobile shell over the site's public JSON e
 
 ## Tabs
 
-- **Home** — brand hero, featured happiness card (live), quick stats.
+- **Home** — a News feed: a featured data story with a live mini ranked chart,
+  quick stats, and a list of data stories (open on the site).
+- **Featured hero** on every list tab — a mini ranked chart of a headline
+  indicator for that section.
 - **Charts** — 150+ indicators, search + topic filter; per-indicator ranking bars
   with period switcher; tap a country bar for its trend.
 - **Countries** — searchable country list (flags); full profile with a locator

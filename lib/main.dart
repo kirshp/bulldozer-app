@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart';
+import 'flags.dart';
+import 'widgets/featured_card.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
 import 'theme.dart';
@@ -54,15 +56,18 @@ class _HomeShellState extends State<HomeShell> {
               ChartsPage(
                   key: ValueKey('stats${catalog.length}'),
                   title: 'Statistics',
-                  kind: 'macro'),
+                  kind: 'macro',
+                  featuredSlug: 'gapminder-life-expectancy'),
               ChartsPage(
                   key: ValueKey('biz${catalog.length}'),
                   title: 'Business & markets',
-                  slugs: bizSlugs),
+                  slugs: bizSlugs,
+                  featuredSlug: 'wb-market-cap'),
               ChartsPage(
                   key: ValueKey('polls${catalog.length}'),
                   title: 'Polls',
-                  kind: 'survey'),
+                  kind: 'survey',
+                  featuredSlug: 'whr-happiness'),
               const CountriesPage(),
               const QuizPage(),
             ],
@@ -194,12 +199,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Observation? _happiest;
+  List<Observation> _happyTop = [];
+  List<Story> _stories = [];
 
   @override
   void initState() {
     super.initState();
     _loadFeatured();
+    _loadStories();
   }
 
   Future<void> _loadFeatured() async {
@@ -208,10 +215,24 @@ class _HomePageState extends State<HomePage> {
       final last = ds.periods.last;
       final rows = ds.data.where((o) => o.period == last).toList()
         ..sort((a, b) => b.value.compareTo(a.value));
-      if (rows.isNotEmpty && mounted) setState(() => _happiest = rows.first);
+      if (mounted) setState(() => _happyTop = rows.take(6).toList());
     } catch (_) {
-      // featured card is decorative — home works without it
+      // featured bars are decorative — home works without them
     }
+  }
+
+  Future<void> _loadStories() async {
+    try {
+      final s = await fetchStories();
+      if (mounted) setState(() => _stories = s);
+    } catch (_) {
+      // stories feed is best-effort
+    }
+  }
+
+  void _openStory(String slug) {
+    launchUrl(Uri.parse('$kBaseUrl/stories/$slug'),
+        mode: LaunchMode.inAppBrowserView);
   }
 
   @override
@@ -250,46 +271,18 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 10),
         brandTagline,
         const SizedBox(height: 16),
-        // Featured card — same hero as the site's News page
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => widget.onGoToTab(1),
-          child: Container(
-            height: 130,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3A2A00), Color(0xFF1C1F23)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: kBorder, width: 0.5),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const Text('FEATURED · WORLD HAPPINESS REPORT',
-                    style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1,
-                        fontWeight: FontWeight.w700,
-                        color: kAmber)),
-                const SizedBox(height: 4),
-                Text(
-                  _happiest == null
-                      ? 'Who is the happiest country on Earth?'
-                      : '${_happiest!.entity} leads with ${formatValue(_happiest!.value)} / 10',
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w700, height: 1.2),
-                ),
-                const SizedBox(height: 2),
-                const Text('Tap to explore the charts →',
-                    style: TextStyle(fontSize: 12, color: kTextDim)),
-              ],
-            ),
-          ),
+        // Featured data story — a rich block with a mini ranked chart.
+        FeaturedCard(
+          tag: 'Featured · World Happiness Report',
+          title: _happyTop.isEmpty
+              ? 'The world’s happiest countries'
+              : '${_happyTop.first.entity} leads the happiness ranking',
+          bars: [
+            for (final o in _happyTop)
+              ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+          ],
+          footer: 'Read the story →',
+          onTap: () => _openStory('happiest-countries'),
         ),
         const SizedBox(height: 16),
         Row(
@@ -301,43 +294,76 @@ class _HomePageState extends State<HomePage> {
             const _StatBox(value: '190+', label: 'countries'),
           ],
         ),
-        const SizedBox(height: 16),
-        _NavCard(
-          emoji: '📊',
-          title: 'Statistics',
-          subtitle: 'Objective data — economy, health, governance…',
-          onTap: () => widget.onGoToTab(1),
+        const SizedBox(height: 22),
+        const Row(
+          children: [
+            Text('📰 ', style: TextStyle(fontSize: 15)),
+            Text('Data stories',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ],
         ),
-        _NavCard(
-          emoji: '💼',
-          title: 'Business & markets',
-          subtitle: 'Market cap, top companies, brands, financial access',
-          onTap: () => widget.onGoToTab(2),
-        ),
-        _NavCard(
-          emoji: '🗳️',
-          title: 'Polls',
-          subtitle: 'What people say — happiness, trust, values',
-          onTap: () => widget.onGoToTab(3),
-        ),
-        _NavCard(
-          emoji: '🌍',
-          title: 'Countries',
-          subtitle: 'Full profile with ranks for any country',
-          onTap: () => widget.onGoToTab(4),
-        ),
-        _NavCard(
-          emoji: '🧩',
-          title: 'Country Quiz',
-          subtitle: 'Guess the country from real data. Beat the chimp.',
-          onTap: () => widget.onGoToTab(5),
-        ),
+        const SizedBox(height: 4),
+        const Text('Visual stories built on public data.',
+            style: TextStyle(fontSize: 12, color: kTextDim)),
+        const SizedBox(height: 10),
+        if (_stories.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+                child: CircularProgressIndicator(color: kAmber, strokeWidth: 2)),
+          )
+        else
+          for (final s in _stories.where((s) => s.slug != 'happiest-countries'))
+            _StoryCard(story: s, onTap: () => _openStory(s.slug)),
         const SizedBox(height: 16),
         const Center(
           child: Text('Open data · full site at shpara.com/bulldozer',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),
       ],
+    );
+  }
+}
+
+class _StoryCard extends StatelessWidget {
+  final Story story;
+  final VoidCallback onTap;
+  const _StoryCard({required this.story, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(story.tag.toUpperCase(),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.w700,
+                      color: kAmber)),
+              const SizedBox(height: 5),
+              Text(story.title,
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, height: 1.2)),
+              const SizedBox(height: 4),
+              Text(story.dek,
+                  style: const TextStyle(
+                      fontSize: 12, color: kTextDim, height: 1.35)),
+              const SizedBox(height: 8),
+              const Text('Read on the site ↗',
+                  style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w600, color: kAmber)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -371,30 +397,3 @@ class _StatBox extends StatelessWidget {
   }
 }
 
-class _NavCard extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  const _NavCard(
-      {required this.emoji,
-      required this.title,
-      required this.subtitle,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Text(emoji, style: const TextStyle(fontSize: 24)),
-        title: Text(title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle,
-            style: const TextStyle(fontSize: 12, color: kTextDim)),
-        trailing: const Icon(Icons.chevron_right, color: kTextDim, size: 20),
-        onTap: onTap,
-      ),
-    );
-  }
-}

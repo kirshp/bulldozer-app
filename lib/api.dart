@@ -146,6 +146,26 @@ Future<List<Country>> fetchCountryIndex() async => [
         Country.fromJson(c)
     ];
 
+class Story {
+  final String slug;
+  final String tag;
+  final String title;
+  final String dek;
+
+  Story.fromJson(Map<String, dynamic> j)
+      : slug = j['slug'] ?? '',
+        tag = j['tag'] ?? '',
+        title = j['title'] ?? '',
+        dek = j['dek'] ?? '';
+
+  String get url => '$kBaseUrl/stories/$slug';
+}
+
+Future<List<Story>> fetchStories() async => [
+      for (final s in await fetchJson('/data/stories.json') as List)
+        Story.fromJson(s)
+    ];
+
 class QuizCountry {
   final String name;
   final String region;
