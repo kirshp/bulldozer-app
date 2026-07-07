@@ -68,7 +68,7 @@ class _HomeShellState extends State<HomeShell> {
                   key: ValueKey('polls${catalog.length}'),
                   title: 'Polls',
                   kind: 'survey',
-                  featuredSlug: 'whr-happiness'),
+                  featuredSlug: 'afro-democracy-support'),
               const CountriesPage(),
               const QuizPage(),
             ],
