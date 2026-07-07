@@ -18,6 +18,8 @@ Same pattern as the Ativa app: a thin mobile shell over the site's public JSON e
 - **Countries** — searchable country list (flags); full profile with a locator
   map, Wikipedia summary, values and ranks by topic, tap any indicator for its
   trend line chart, and a **Compare** view (up to 5 countries on one indicator).
+- **Explore** — scatter any indicator against another across all countries
+  (a bivariate view, from the menu).
 - **Maps** — every dataset has a **Map** view: a world choropleth coloured by
   the data; tap a country for its trend. Geometry is pre-projected into
   `assets/world.json` (see `tools/`), painted with `CustomPaint`.

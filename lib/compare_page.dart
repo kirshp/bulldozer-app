@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'theme.dart';
+import 'widgets/search_sheet.dart';
 
 const _maxCountries = 5;
 
@@ -55,7 +56,8 @@ class _ComparePageState extends State<ComparePage> {
   }
 
   void _pickIndicator() {
-    _showSearchSheet<CatalogEntry>(
+    showSearchSheet<CatalogEntry>(
+      context,
       title: 'Choose an indicator',
       items: catalog,
       label: (e) => e.title,
@@ -71,7 +73,8 @@ class _ComparePageState extends State<ComparePage> {
     final pool = widget.allCountries
         .where((c) => !_selected.any((s) => s.iso == c.iso))
         .toList();
-    _showSearchSheet<Country>(
+    showSearchSheet<Country>(
+      context,
       title: 'Add a country',
       items: pool,
       label: (c) => c.name,
@@ -179,106 +182,6 @@ class _ComparePageState extends State<ComparePage> {
                 negative: (r.$2 ?? 0) < 0,
               ),
         ],
-      ),
-    );
-  }
-
-  void _showSearchSheet<T>({
-    required String title,
-    required List<T> items,
-    required String Function(T) label,
-    required String Function(T) sub,
-    required void Function(T) onPick,
-  }) {
-    String query = '';
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: kBgElev,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheet) {
-          final q = query.toLowerCase();
-          final shown = items
-              .where((e) => q.isEmpty || label(e).toLowerCase().contains(q))
-              .take(80)
-              .toList();
-          return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx).viewInsets.bottom),
-            child: SizedBox(
-              height: MediaQuery.of(ctx).size.height * 0.7,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(title,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w700)),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: kTextDim),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      autofocus: true,
-                      onChanged: (v) => setSheet(() => query = v),
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Search…',
-                        hintStyle:
-                            const TextStyle(color: kTextDim, fontSize: 14),
-                        prefixIcon:
-                            const Icon(Icons.search, color: kTextDim, size: 20),
-                        isDense: true,
-                        filled: true,
-                        fillColor: kBgCard,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: kBorder, width: 0.5),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: kBorder, width: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: shown.length,
-                      itemBuilder: (_, i) => ListTile(
-                        dense: true,
-                        title: Text(label(shown[i]),
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
-                        subtitle: Text(sub(shown[i]),
-                            style: const TextStyle(
-                                fontSize: 12, color: kTextDim)),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          onPick(shown[i]);
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }

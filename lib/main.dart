@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart';
+import 'explore_page.dart';
 import 'flags.dart';
 import 'widgets/featured_card.dart';
 import 'countries_page.dart';
@@ -124,6 +125,18 @@ class _HomeShellState extends State<HomeShell> {
             _menuItem(context, Icons.public_outlined, 'Countries', 4),
             _menuItem(context, Icons.extension_outlined, 'Country Quiz', 5),
             const Divider(color: kBorder, height: 1),
+            ListTile(
+              leading: const Icon(Icons.scatter_plot_outlined,
+                  color: kAmber, size: 22),
+              title: const Text('Explore — X vs Y',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600, color: kText)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const ExplorePage()));
+              },
+            ),
             _linkItem(context, Icons.school_outlined,
                 'Learn — data & BI tools', '/edu'),
             _linkItem(context, Icons.menu_book_outlined,
