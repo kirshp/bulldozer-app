@@ -133,8 +133,21 @@ class CountryPage extends StatefulWidget {
   State<CountryPage> createState() => _CountryPageState();
 }
 
+// Headline macro indicators shown as KPI badges (first available slug wins).
+const _headline = <(String, List<String>)>[
+  ('GDP per capita', ['imf-gdp-per-capita-ppp', 'imf-gdp-per-capita', 'gapminder-income']),
+  ('GDP growth', ['imf-gdp-growth', 'gapminder-gdp-growth']),
+  ('Inflation', ['imf-inflation']),
+  ('Unemployment', ['imf-unemployment']),
+  ('Life expectancy', ['gapminder-life-expectancy']),
+  ('Population', ['imf-population', 'gapminder-population']),
+];
+
+const _sectionMeta = [('macro', '📊 Statistics'), ('survey', '🗣️ Surveys')];
+
 class _CountryPageState extends State<CountryPage> {
   String? _wiki;
+  final Set<String> _expanded = {}; // 'kind:topic' groups shown in full
 
   @override
   void initState() {
@@ -145,6 +158,104 @@ class _CountryPageState extends State<CountryPage> {
   Future<void> _loadWiki() async {
     final s = await fetchWikipediaSummary(widget.country.name);
     if (mounted) setState(() => _wiki = s);
+  }
+
+  CountryItem? _find(Country c, String slug) {
+    for (final it in c.items) {
+      if (it.slug == slug) return it;
+    }
+    return null;
+  }
+
+  Widget _kpiBadge(String label, CountryItem it) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _showIndicatorTrend(it),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: kBgCard,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: kBorder, width: 0.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 10, color: kTextDim, height: 1.15)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(formatValue(it.value),
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: kAmber)),
+                Text('#${it.rank} of ${it.total}',
+                    style: const TextStyle(fontSize: 10, color: kTextDim)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Statistics then Surveys, each grouped by topic; every topic shows the
+  /// first 3 indicators with a "Show all" toggle for the rest.
+  List<Widget> _sections(List<CountryItem> rest) {
+    final out = <Widget>[];
+    for (final sec in _sectionMeta) {
+      final secItems = rest.where((it) => it.kind == sec.$1).toList();
+      if (secItems.isEmpty) continue;
+      out.add(Padding(
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 2),
+        child: Text(sec.$2,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+      ));
+      final byTopic = <String, List<CountryItem>>{};
+      for (final it in secItems) {
+        byTopic.putIfAbsent(it.topic, () => []).add(it);
+      }
+      final topics = byTopic.keys.toList()
+        ..sort((a, b) => topicSortKey(a).compareTo(topicSortKey(b)));
+      for (final t in topics) {
+        final rows = byTopic[t]!
+          ..sort((a, b) => a.title.compareTo(b.title));
+        final key = '${sec.$1}:$t';
+        final expanded = _expanded.contains(key);
+        final shown = expanded ? rows : rows.take(3).toList();
+        out.add(Padding(
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
+          child: Text(topicLabels[t] ?? t,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: kAmber,
+                  letterSpacing: 0.5)),
+        ));
+        out.addAll(shown.map((it) =>
+            _IndicatorRow(item: it, onTap: () => _showIndicatorTrend(it))));
+        if (rows.length > 3) {
+          out.add(Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => setState(() =>
+                  expanded ? _expanded.remove(key) : _expanded.add(key)),
+              icon: Icon(expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 18, color: kAmber),
+              label: Text(expanded ? 'Show less' : 'Show all ${rows.length}',
+                  style: const TextStyle(fontSize: 12, color: kAmber)),
+            ),
+          ));
+        }
+      }
+    }
+    return out;
   }
 
   /// Time series for this country in [item]'s dataset, shown as a line chart.
@@ -205,12 +316,21 @@ class _CountryPageState extends State<CountryPage> {
   @override
   Widget build(BuildContext context) {
     final country = widget.country;
-    final byTopic = <String, List<CountryItem>>{};
-    for (final it in country.items) {
-      byTopic.putIfAbsent(it.topic, () => []).add(it);
+    // Headline macro KPIs (first available slug per row), like the site.
+    final headline = <(String, CountryItem)>[];
+    final headlineSlugs = <String>{};
+    for (final h in _headline) {
+      for (final s in h.$2) {
+        final it = _find(country, s);
+        if (it != null) {
+          headline.add((h.$1, it));
+          headlineSlugs.add(it.slug);
+          break;
+        }
+      }
     }
-    final topics = byTopic.keys.toList()
-      ..sort((a, b) => topicSortKey(a).compareTo(topicSortKey(b)));
+    final rest =
+        country.items.where((it) => !headlineSlugs.contains(it.slug)).toList();
     final similar = widget.allCountries
         .where((c) => c.region == country.region && c.iso != country.iso)
         .take(12)
@@ -233,18 +353,32 @@ class _CountryPageState extends State<CountryPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('${country.region} · ${country.items.length} indicators',
-              style: const TextStyle(fontSize: 12, color: kTextDim)),
-          const SizedBox(height: 10),
+          // Map zoomed to and highlighting the country.
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Choropleth(
               values: {country.iso: 1},
               highlightIso: country.iso,
+              zoomIso: country.iso,
             ),
           ),
+          const SizedBox(height: 10),
+          Text('${country.region} · ${country.items.length} indicators',
+              style: const TextStyle(fontSize: 12, color: kTextDim)),
+          if (headline.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.92,
+              children: [for (final h in headline) _kpiBadge(h.$1, h.$2)],
+            ),
+          ],
           if (_wiki != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -264,19 +398,7 @@ class _CountryPageState extends State<CountryPage> {
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          for (final t in topics) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 14, 0, 6),
-              child: Text(topicLabels[t] ?? t,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: kAmber)),
-            ),
-            for (final it in byTopic[t]!)
-              _IndicatorRow(item: it, onTap: () => _showIndicatorTrend(it)),
-          ],
+          ..._sections(rest),
           if (similar.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.fromLTRB(0, 18, 0, 8),

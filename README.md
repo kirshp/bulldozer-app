@@ -15,8 +15,9 @@ Same pattern as the Ativa app: a thin mobile shell over the site's public JSON e
   indicator for that section.
 - **Charts** — 150+ indicators, search + topic filter; per-indicator ranking bars
   with period switcher; tap a country bar for its trend.
-- **Countries** — searchable country list (flags); full profile with a locator
-  map, Wikipedia summary, values and ranks by topic, tap any indicator for its
+- **Countries** — searchable country list (flags); full profile with a map zoomed to the
+  country, headline macro KPI badges, Wikipedia summary, and indicators grouped
+  into collapsible Statistics/Surveys sections, tap any indicator for its
   trend line chart, and a **Compare** view (up to 5 countries on one indicator).
 - **Explore** — scatter any indicator against another across all countries
   (a bivariate view, from the menu).

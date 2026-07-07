@@ -109,6 +109,7 @@ class CountryItem {
   final String slug;
   final String title;
   final String topic;
+  final String kind; // 'macro' | 'survey'
   final String unit;
   final double value;
   final String period;
@@ -119,6 +120,7 @@ class CountryItem {
       : slug = j['slug'] ?? '',
         title = j['title'] ?? '',
         topic = j['topic'] ?? '',
+        kind = j['kind'] ?? 'macro',
         unit = j['unit'] ?? '',
         value = (j['value'] as num?)?.toDouble() ?? 0,
         period = '${j['period'] ?? ''}',

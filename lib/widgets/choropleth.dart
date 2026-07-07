@@ -50,9 +50,14 @@ Future<WorldGeo> loadWorldGeo() async {
 class Choropleth extends StatefulWidget {
   final Map<String, double> values;
   final String? highlightIso;
+  final String? zoomIso; // zoom the view to this country (locator map)
   final void Function(String iso, String name)? onTap;
   const Choropleth(
-      {super.key, required this.values, this.highlightIso, this.onTap});
+      {super.key,
+      required this.values,
+      this.highlightIso,
+      this.zoomIso,
+      this.onTap});
 
   @override
   State<Choropleth> createState() => _ChoroplethState();
@@ -91,6 +96,13 @@ class _ChoroplethState extends State<Choropleth> {
     return null;
   }
 
+  GeoCountry? _byIso(String iso) {
+    for (final c in _geo!.countries) {
+      if (c.iso == iso) return c;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final geo = _geo;
@@ -105,22 +117,47 @@ class _ChoroplethState extends State<Choropleth> {
     final minV = vals.isEmpty ? 0.0 : vals.reduce(min);
     final maxV = vals.isEmpty ? 1.0 : vals.reduce(max);
 
+    // View region in geo coords: whole world, or zoomed to one country.
+    final aspect = geo.w / geo.h;
+    double rx0 = 0, ry0 = 0, regionW = geo.w;
+    if (widget.zoomIso != null) {
+      final c = _byIso(widget.zoomIso!);
+      if (c != null) {
+        double x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+        for (final poly in c.polys) {
+          for (final ring in poly) {
+            for (final p in ring) {
+              if (p.dx < x0) x0 = p.dx;
+              if (p.dy < y0) y0 = p.dy;
+              if (p.dx > x1) x1 = p.dx;
+              if (p.dy > y1) y1 = p.dy;
+            }
+          }
+        }
+        final cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        regionW = (max(x1 - x0, (y1 - y0) * aspect) * 2.4).clamp(70.0, geo.w);
+        final rh = regionW / aspect;
+        rx0 = (cx - regionW / 2).clamp(0.0, geo.w - regionW);
+        ry0 = (cy - rh / 2).clamp(0.0, geo.h - rh);
+      }
+    }
+
     return AspectRatio(
-      aspectRatio: geo.w / geo.h,
+      aspectRatio: aspect,
       child: LayoutBuilder(
         builder: (ctx, cons) {
-          final scale = cons.maxWidth / geo.w;
+          final zs = cons.maxWidth / regionW;
           return GestureDetector(
             onTapUp: (d) {
               if (widget.onTap == null) return;
-              final c = _hitTest(
-                  d.localPosition.dx / scale, d.localPosition.dy / scale);
+              final c = _hitTest(d.localPosition.dx / zs + rx0,
+                  d.localPosition.dy / zs + ry0);
               if (c != null) widget.onTap!(c.iso, c.name);
             },
             child: CustomPaint(
               size: Size(cons.maxWidth, cons.maxHeight),
-              painter: _MapPainter(
-                  geo, widget.values, minV, maxV, widget.highlightIso, scale),
+              painter: _MapPainter(geo, widget.values, minV, maxV,
+                  widget.highlightIso, rx0, ry0, zs),
             ),
           );
         },
@@ -135,9 +172,11 @@ class _MapPainter extends CustomPainter {
   final double minV;
   final double maxV;
   final String? highlight;
-  final double scale;
+  final double rx0;
+  final double ry0;
+  final double zs;
   _MapPainter(this.geo, this.values, this.minV, this.maxV, this.highlight,
-      this.scale);
+      this.rx0, this.ry0, this.zs);
 
   // Visible "land" grey so countries read on the dark background even with no
   // data (e.g. the country-profile locator map, which highlights just one).
@@ -155,9 +194,9 @@ class _MapPainter extends CustomPainter {
       for (final poly in c.polys) {
         for (final ring in poly) {
           if (ring.isEmpty) continue;
-          path.moveTo(ring[0].dx * scale, ring[0].dy * scale);
+          path.moveTo((ring[0].dx - rx0) * zs, (ring[0].dy - ry0) * zs);
           for (int i = 1; i < ring.length; i++) {
-            path.lineTo(ring[i].dx * scale, ring[i].dy * scale);
+            path.lineTo((ring[i].dx - rx0) * zs, (ring[i].dy - ry0) * zs);
           }
           path.close();
         }
@@ -189,5 +228,7 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(_MapPainter old) =>
       old.values != values ||
       old.highlight != highlight ||
-      old.scale != scale;
+      old.zs != zs ||
+      old.rx0 != rx0 ||
+      old.ry0 != ry0;
 }
