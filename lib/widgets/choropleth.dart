@@ -139,7 +139,9 @@ class _MapPainter extends CustomPainter {
   _MapPainter(this.geo, this.values, this.minV, this.maxV, this.highlight,
       this.scale);
 
-  static final _noData = Paint()..color = kBgElev;
+  // Visible "land" grey so countries read on the dark background even with no
+  // data (e.g. the country-profile locator map, which highlights just one).
+  static final _noData = Paint()..color = const Color(0xFF2A2F36);
   static final _border = Paint()
     ..color = kBg
     ..style = PaintingStyle.stroke
@@ -162,7 +164,9 @@ class _MapPainter extends CustomPainter {
       }
       final v = values[c.iso];
       final Paint fill;
-      if (v == null || !v.isFinite) {
+      if (c.iso == highlight) {
+        fill = Paint()..color = kAmber; // selected country pops (locator map)
+      } else if (v == null || !v.isFinite) {
         fill = _noData;
       } else {
         final t = maxV > minV ? (v - minV) / (maxV - minV) : 0.5;
@@ -176,7 +180,7 @@ class _MapPainter extends CustomPainter {
             Paint()
               ..color = kText
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.6);
+              ..strokeWidth = 1.8);
       }
     }
   }

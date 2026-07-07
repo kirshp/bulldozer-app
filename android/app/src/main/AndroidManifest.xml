@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for network access in release builds (debug/profile add it
+         automatically; release does not). Without it every fetch fails with
+         "Failed host lookup" and sections come up empty. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="BullDozer Stats"
         android:name="${applicationName}"
