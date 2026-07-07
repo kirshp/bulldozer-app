@@ -12,8 +12,9 @@ Same pattern as the Ativa app: a thin mobile shell over the site's public JSON e
 - **Home** — brand hero, featured happiness card (live), quick stats.
 - **Charts** — 150+ indicators, search + topic filter; per-indicator ranking bars
   with period switcher; tap a country bar for its trend.
-- **Countries** — searchable country list (flags), full profile with values and
-  ranks grouped by topic.
+- **Countries** — searchable country list (flags); full profile with values and
+  ranks by topic, a Wikipedia summary, tap any indicator for its trend line
+  chart, and a **Compare** view (up to 5 countries on one indicator).
 - **Quiz** — "Guess the country": 10 rounds, data facts as hints, fewer hints =
   more points, flag as the last hint.
 

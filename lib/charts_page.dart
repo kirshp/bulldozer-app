@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'theme.dart';
+import 'widgets/trend_chart.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
 /// Alphabetical key for a topic — the display label without its emoji prefix.
@@ -287,39 +288,13 @@ class _DatasetPageState extends State<DatasetPage> {
             Text('${ds.title} · ${ds.unit}',
                 style: const TextStyle(fontSize: 12, color: kTextDim)),
             const SizedBox(height: 16),
-            for (final o in series)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: [
-                    SizedBox(
-                        width: 52,
-                        child: Text(o.period,
-                            style: const TextStyle(
-                                fontSize: 12, color: kTextDim))),
-                    Expanded(
-                      child: _Bar(
-                          fraction: series
-                                      .map((s) => s.value.abs())
-                                      .reduce((a, b) => a > b ? a : b) ==
-                                  0
-                              ? 0
-                              : o.value.abs() /
-                                  series
-                                      .map((s) => s.value.abs())
-                                      .reduce((a, b) => a > b ? a : b),
-                          color: o.period == obs.period ? kAmber : kBorder),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                        width: 64,
-                        child: Text(formatValue(o.value),
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600))),
-                  ],
-                ),
-              ),
+            TrendChart(
+              points: [for (final o in series) (o.period, o.value)],
+              highlightPeriod: obs.period,
+            ),
+            const SizedBox(height: 12),
+            if (series.length >= 2)
+              _TrendSummary(first: series.first, last: series.last),
             const SizedBox(height: 8),
           ],
         ),
@@ -402,6 +377,38 @@ class _Bar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// First→last period with the net change, colour-coded up/down.
+class _TrendSummary extends StatelessWidget {
+  final Observation first;
+  final Observation last;
+  const _TrendSummary({required this.first, required this.last});
+
+  @override
+  Widget build(BuildContext context) {
+    final change = last.value - first.value;
+    final up = change >= 0;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('${first.period} → ${last.period}',
+            style: const TextStyle(fontSize: 12, color: kTextDim)),
+        Row(
+          children: [
+            Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 14, color: up ? kUp : kDown),
+            const SizedBox(width: 2),
+            Text('${up ? '+' : ''}${formatValue(change)}',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: up ? kUp : kDown)),
+          ],
+        ),
+      ],
     );
   }
 }

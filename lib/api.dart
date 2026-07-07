@@ -46,6 +46,23 @@ Future<dynamic> fetchJson(String path) async {
   }
 }
 
+/// One-paragraph Wikipedia summary for a place name (REST API). Returns null on
+/// any miss (unmatched title, offline) — the caller just omits the blurb.
+Future<String?> fetchWikipediaSummary(String name) async {
+  try {
+    final r = await http
+        .get(Uri.parse(
+            'https://en.wikipedia.org/api/rest_v1/page/summary/${Uri.encodeComponent(name)}'))
+        .timeout(const Duration(seconds: 12));
+    if (r.statusCode != 200) return null;
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    final extract = j['extract'];
+    return (extract is String && extract.isNotEmpty) ? extract : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 class Observation {
   final String entity;
   final String group;

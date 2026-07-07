@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'charts_page.dart' show topicLabels, topicSortKey;
+import 'compare_page.dart';
 import 'theme.dart';
+import 'widgets/trend_chart.dart';
 
 class CountriesPage extends StatefulWidget {
   const CountriesPage({super.key});
@@ -107,7 +109,8 @@ class _CountriesPageState extends State<CountriesPage> {
                   trailing:
                       const Icon(Icons.chevron_right, color: kTextDim, size: 20),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => CountryPage(country: c))),
+                      builder: (_) => CountryPage(
+                          country: c, allCountries: _countries ?? const []))),
                 ),
               );
             },
@@ -174,29 +177,139 @@ String _flagFromIso(String iso3) {
   return String.fromCharCodes(a2.codeUnits.map((c) => 0x1F1E6 + c - 65));
 }
 
-class CountryPage extends StatelessWidget {
+class CountryPage extends StatefulWidget {
   final Country country;
-  const CountryPage({super.key, required this.country});
+  final List<Country> allCountries;
+  const CountryPage(
+      {super.key, required this.country, this.allCountries = const []});
+
+  @override
+  State<CountryPage> createState() => _CountryPageState();
+}
+
+class _CountryPageState extends State<CountryPage> {
+  String? _wiki;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWiki();
+  }
+
+  Future<void> _loadWiki() async {
+    final s = await fetchWikipediaSummary(widget.country.name);
+    if (mounted) setState(() => _wiki = s);
+  }
+
+  /// Time series for this country in [item]'s dataset, shown as a line chart.
+  void _showIndicatorTrend(CountryItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kBgElev,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => FutureBuilder<Dataset>(
+        future: fetchDataset(item.slug),
+        builder: (ctx, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const SizedBox(
+                height: 260,
+                child: Center(child: CircularProgressIndicator(color: kAmber)));
+          }
+          final series = (snap.data?.data ?? [])
+              .where((o) => o.iso == widget.country.iso)
+              .toList()
+            ..sort((a, b) => a.period.compareTo(b.period));
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+                Text('${widget.country.name} · ${item.unit}',
+                    style: const TextStyle(fontSize: 12, color: kTextDim)),
+                const SizedBox(height: 16),
+                if (series.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                        child: Text('No time series available.',
+                            style: TextStyle(color: kTextDim))),
+                  )
+                else
+                  TrendChart(
+                    points: [for (final o in series) (o.period, o.value)],
+                    highlightPeriod: series.last.period,
+                  ),
+                const SizedBox(height: 12),
+                Text('#${item.rank} of ${item.total} · latest ${item.period}',
+                    style: const TextStyle(fontSize: 12, color: kTextDim)),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final country = widget.country;
     final byTopic = <String, List<CountryItem>>{};
     for (final it in country.items) {
       byTopic.putIfAbsent(it.topic, () => []).add(it);
     }
     final topics = byTopic.keys.toList()
       ..sort((a, b) => topicSortKey(a).compareTo(topicSortKey(b)));
+    final similar = widget.allCountries
+        .where((c) => c.region == country.region && c.iso != country.iso)
+        .take(12)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('${_flagFromIso(country.iso)}  ${country.name}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.compare_arrows),
+            tooltip: 'Compare',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ComparePage(
+                    initial: country, allCountries: widget.allCountries))),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text('${country.region} · ${country.items.length} indicators',
               style: const TextStyle(fontSize: 12, color: kTextDim)),
+          if (_wiki != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: kBgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kBorder, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_wiki!,
+                      style: const TextStyle(fontSize: 13, height: 1.45)),
+                  const SizedBox(height: 6),
+                  const Text('Wikipedia',
+                      style: TextStyle(fontSize: 10, color: kTextDim)),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           for (final t in topics) ...[
             Padding(
@@ -207,7 +320,34 @@ class CountryPage extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: kAmber)),
             ),
-            for (final it in byTopic[t]!) _IndicatorRow(item: it),
+            for (final it in byTopic[t]!)
+              _IndicatorRow(item: it, onTap: () => _showIndicatorTrend(it)),
+          ],
+          if (similar.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(0, 18, 0, 8),
+              child: Text('More countries',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kAmber)),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in similar)
+                  ActionChip(
+                    label: Text('${_flagFromIso(c.iso)} ${c.name}',
+                        style: const TextStyle(fontSize: 12)),
+                    onPressed: () => Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                            builder: (_) => CountryPage(
+                                country: c,
+                                allCountries: widget.allCountries))),
+                  ),
+              ],
+            ),
           ],
         ],
       ),
@@ -217,7 +357,8 @@ class CountryPage extends StatelessWidget {
 
 class _IndicatorRow extends StatelessWidget {
   final CountryItem item;
-  const _IndicatorRow({required this.item});
+  final VoidCallback? onTap;
+  const _IndicatorRow({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +366,10 @@ class _IndicatorRow extends StatelessWidget {
     final bottomThird = item.total > 0 && item.rank > item.total * 2 / 3;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 3),
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
@@ -258,8 +402,13 @@ class _IndicatorRow extends StatelessWidget {
                                 : kTextDim)),
               ],
             ),
+            const Padding(
+              padding: EdgeInsets.only(left: 6),
+              child: Icon(Icons.show_chart, size: 16, color: kTextDim),
+            ),
           ],
         ),
+      ),
       ),
     );
   }
