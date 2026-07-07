@@ -12,9 +12,12 @@ Same pattern as the Ativa app: a thin mobile shell over the site's public JSON e
 - **Home** — brand hero, featured happiness card (live), quick stats.
 - **Charts** — 150+ indicators, search + topic filter; per-indicator ranking bars
   with period switcher; tap a country bar for its trend.
-- **Countries** — searchable country list (flags); full profile with values and
-  ranks by topic, a Wikipedia summary, tap any indicator for its trend line
-  chart, and a **Compare** view (up to 5 countries on one indicator).
+- **Countries** — searchable country list (flags); full profile with a locator
+  map, Wikipedia summary, values and ranks by topic, tap any indicator for its
+  trend line chart, and a **Compare** view (up to 5 countries on one indicator).
+- **Maps** — every dataset has a **Map** view: a world choropleth coloured by
+  the data; tap a country for its trend. Geometry is pre-projected into
+  `assets/world.json` (see `tools/`), painted with `CustomPaint`.
 - **Quiz** — "Guess the country": 10 rounds, data facts as hints, fewer hints =
   more points, flag as the last hint.
 

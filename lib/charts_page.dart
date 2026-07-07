@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'theme.dart';
+import 'widgets/choropleth.dart';
 import 'widgets/trend_chart.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
@@ -174,6 +175,7 @@ class _DatasetPageState extends State<DatasetPage> {
   Dataset? _ds;
   String? _error;
   String? _period;
+  bool _mapView = false;
   bool _showAll = false;
 
   @override
@@ -249,20 +251,56 @@ class _DatasetPageState extends State<DatasetPage> {
           ],
         ),
         const SizedBox(height: 12),
-        for (var i = 0; i < shown.length; i++)
-          _BarRow(
-            rank: i + 1,
-            obs: shown[i],
-            fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
-            negative: shown[i].value < 0,
-            onTap: () => _showTrend(shown[i]),
+        // Bars / Map view toggle.
+        Row(
+          children: [
+            _ViewToggle(
+                icon: Icons.bar_chart,
+                label: 'Bars',
+                selected: !_mapView,
+                onTap: () => setState(() => _mapView = false)),
+            const SizedBox(width: 8),
+            _ViewToggle(
+                icon: Icons.public,
+                label: 'Map',
+                selected: _mapView,
+                onTap: () => setState(() => _mapView = true)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_mapView) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Choropleth(
+              values: {
+                for (final o in rows)
+                  if (o.iso.isNotEmpty) o.iso: o.value
+              },
+              onTap: (iso, name) {
+                final match = rows.where((o) => o.iso == iso);
+                if (match.isNotEmpty) _showTrend(match.first);
+              },
+            ),
           ),
-        if (!_showAll && rows.length > 20)
-          TextButton(
-            onPressed: () => setState(() => _showAll = true),
-            child: Text('Show all ${rows.length}',
-                style: const TextStyle(color: kAmber)),
-          ),
+          const SizedBox(height: 8),
+          Text('Tap a country for its trend · $_period · ${ds.unit}',
+              style: const TextStyle(fontSize: 11, color: kTextDim)),
+        ] else ...[
+          for (var i = 0; i < shown.length; i++)
+            _BarRow(
+              rank: i + 1,
+              obs: shown[i],
+              fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
+              negative: shown[i].value < 0,
+              onTap: () => _showTrend(shown[i]),
+            ),
+          if (!_showAll && rows.length > 20)
+            TextButton(
+              onPressed: () => setState(() => _showAll = true),
+              child: Text('Show all ${rows.length}',
+                  style: const TextStyle(color: kAmber)),
+            ),
+        ],
       ],
     );
   }
@@ -382,6 +420,46 @@ class _Bar extends StatelessWidget {
 }
 
 /// First→last period with the net change, colour-coded up/down.
+class _ViewToggle extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ViewToggle(
+      {required this.icon,
+      required this.label,
+      required this.selected,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? kAmber : kBgCard,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? kAmber : kBorder, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: selected ? kBg : kTextDim),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? kBg : kText)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TrendSummary extends StatelessWidget {
   final Observation first;
   final Observation last;

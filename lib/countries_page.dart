@@ -4,6 +4,7 @@ import 'api.dart';
 import 'charts_page.dart' show topicLabels, topicSortKey;
 import 'compare_page.dart';
 import 'theme.dart';
+import 'widgets/choropleth.dart';
 import 'widgets/trend_chart.dart';
 
 class CountriesPage extends StatefulWidget {
@@ -289,6 +290,14 @@ class _CountryPageState extends State<CountryPage> {
         children: [
           Text('${country.region} · ${country.items.length} indicators',
               style: const TextStyle(fontSize: 12, color: kTextDim)),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Choropleth(
+              values: {country.iso: 1},
+              highlightIso: country.iso,
+            ),
+          ),
           if (_wiki != null) ...[
             const SizedBox(height: 10),
             Container(
