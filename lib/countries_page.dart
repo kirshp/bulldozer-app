@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'api.dart';
-import 'charts_page.dart' show topicLabels, topicSortKey;
+import 'charts_page.dart' show topicLabels, topicRank;
 import 'compare_page.dart';
 import 'flags.dart';
 import 'theme.dart';
@@ -222,7 +222,7 @@ class _CountryPageState extends State<CountryPage> {
         byTopic.putIfAbsent(it.topic, () => []).add(it);
       }
       final topics = byTopic.keys.toList()
-        ..sort((a, b) => topicSortKey(a).compareTo(topicSortKey(b)));
+        ..sort((a, b) => topicRank(a).compareTo(topicRank(b)));
       for (final t in topics) {
         final rows = byTopic[t]!
           ..sort((a, b) => a.title.compareTo(b.title));

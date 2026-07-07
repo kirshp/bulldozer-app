@@ -13,6 +13,18 @@ import 'widgets/trend_chart.dart';
 String topicSortKey(String t) =>
     (topicLabels[t] ?? t).replaceFirst(RegExp(r'^\S+\s'), '');
 
+/// Fixed display order (site's TOPIC_ORDER): Economy, Demographics,
+/// Connectivity first, then the rest.
+const topicOrder = [
+  'economy', 'demographics', 'connectivity', 'health', 'education',
+  'environment', 'governance', 'media', 'safety', 'risk', 'wellbeing',
+  'attitudes',
+];
+int topicRank(String t) {
+  final i = topicOrder.indexOf(t);
+  return i < 0 ? topicOrder.length : i;
+}
+
 const topicLabels = {
   'attitudes': '🧭 Attitudes & values',
   'connectivity': '🌐 Connectivity',
@@ -104,7 +116,7 @@ class _ChartsPageState extends State<ChartsPage> {
             e.source.toLowerCase().contains(q))
         .toList();
     final topics = {for (final e in pool) e.topic}.toList()
-      ..sort((a, b) => topicSortKey(a).compareTo(topicSortKey(b)));
+      ..sort((a, b) => topicRank(a).compareTo(topicRank(b)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
