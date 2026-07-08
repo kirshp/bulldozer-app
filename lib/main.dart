@@ -156,6 +156,17 @@ class _HomeShellState extends State<HomeShell> {
             _linkItem(
                 context, Icons.open_in_new, 'Open full website', '/'),
             ListTile(
+              leading: const Icon(Icons.code, color: kTextDim, size: 22),
+              title: const Text('GitHub — app source',
+                  style: TextStyle(fontSize: 15, color: kText)),
+              trailing: const Icon(Icons.north_east, color: kTextDim, size: 15),
+              onTap: () {
+                Navigator.pop(context);
+                launchUrl(Uri.parse('https://github.com/kirshp/bulldozer-app'),
+                    mode: LaunchMode.externalApplication);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.mail_outline, color: kTextDim, size: 22),
               title: const Text('Contact developer',
                   style: TextStyle(fontSize: 15, color: kText)),
@@ -176,7 +187,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.10.1',
+                  applicationVersion: '1.10.2',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
