@@ -11,6 +11,7 @@ import 'flags.dart';
 import 'widgets/featured_card.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
+import 'search_page.dart';
 import 'theme.dart';
 
 void main() {
@@ -187,7 +188,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.10.2',
+                  applicationVersion: '1.11.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -349,6 +350,15 @@ class _HomePageState extends State<HomePage> {
               child: const Text('beta',
                   style: TextStyle(
                       fontSize: 11, fontWeight: FontWeight.w700, color: kAmber)),
+            ),
+            // Global search — countries and indicators from one field.
+            IconButton(
+              onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SearchPage())),
+              icon: const Icon(Icons.search, color: kText),
+              tooltip: 'Search',
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
             ),
             // Hamburger — opens the menu drawer from the right.
             IconButton(

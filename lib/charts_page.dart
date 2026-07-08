@@ -252,6 +252,7 @@ class _DatasetPageState extends State<DatasetPage> {
   String? _period;
   bool _mapView = false;
   bool _showAll = false;
+  bool _asc = false; // bar order: false = highest first, true = lowest first
 
   @override
   void initState() {
@@ -310,7 +311,8 @@ class _DatasetPageState extends State<DatasetPage> {
   Widget _buildBody() {
     final ds = _ds!;
     final rows = ds.data.where((o) => o.period == _period).toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+      ..sort((a, b) =>
+          _asc ? a.value.compareTo(b.value) : b.value.compareTo(a.value));
     final shown = _showAll ? rows : rows.take(20).toList();
     final maxV = rows.isEmpty
         ? 1.0
@@ -360,6 +362,15 @@ class _DatasetPageState extends State<DatasetPage> {
                 label: 'Map',
                 selected: _mapView,
                 onTap: () => setState(() => _mapView = true)),
+            const Spacer(),
+            // Sort direction — long lists don't fit, so let the user flip to
+            // the bottom of the ranking without scrolling.
+            if (!_mapView)
+              _ViewToggle(
+                  icon: _asc ? Icons.arrow_upward : Icons.arrow_downward,
+                  label: _asc ? 'Lowest' : 'Highest',
+                  selected: false,
+                  onTap: () => setState(() => _asc = !_asc)),
           ],
         ),
         const SizedBox(height: 12),
@@ -383,7 +394,7 @@ class _DatasetPageState extends State<DatasetPage> {
         ] else ...[
           for (var i = 0; i < shown.length; i++)
             _BarRow(
-              rank: i + 1,
+              rank: _asc ? rows.length - i : i + 1, // rank in the full ranking
               obs: shown[i],
               fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
               negative: shown[i].value < 0,
