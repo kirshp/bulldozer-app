@@ -45,18 +45,29 @@ Future<WorldGeo> loadWorldGeo() async {
       (j['w'] as num).toDouble(), (j['h'] as num).toDouble(), countries);
 }
 
+/// A labelled point in the map's geo space (pre-projected, like world.json) —
+/// used to mark a country's capital on the locator map.
+class CapitalMarker {
+  final String name;
+  final double x;
+  final double y;
+  const CapitalMarker(this.name, this.x, this.y);
+}
+
 /// A world choropleth: fills each country by [values] (ISO3 → value) on the
 /// amber ramp; grey where there's no data. Tap a country to drill in.
 class Choropleth extends StatefulWidget {
   final Map<String, double> values;
   final String? highlightIso;
   final String? zoomIso; // zoom the view to this country (locator map)
+  final CapitalMarker? capital; // labelled dot, like the site's CountryPanel
   final void Function(String iso, String name)? onTap;
   const Choropleth(
       {super.key,
       required this.values,
       this.highlightIso,
       this.zoomIso,
+      this.capital,
       this.onTap});
 
   @override
@@ -157,7 +168,7 @@ class _ChoroplethState extends State<Choropleth> {
             child: CustomPaint(
               size: Size(cons.maxWidth, cons.maxHeight),
               painter: _MapPainter(geo, widget.values, minV, maxV,
-                  widget.highlightIso, rx0, ry0, zs),
+                  widget.highlightIso, rx0, ry0, zs, widget.capital),
             ),
           );
         },
@@ -175,8 +186,9 @@ class _MapPainter extends CustomPainter {
   final double rx0;
   final double ry0;
   final double zs;
+  final CapitalMarker? capital;
   _MapPainter(this.geo, this.values, this.minV, this.maxV, this.highlight,
-      this.rx0, this.ry0, this.zs);
+      this.rx0, this.ry0, this.zs, this.capital);
 
   // Visible "land" grey so countries read on the dark background even with no
   // data (e.g. the country-profile locator map, which highlights just one).
@@ -222,6 +234,48 @@ class _MapPainter extends CustomPainter {
               ..strokeWidth = 1.8);
       }
     }
+    _paintCapital(canvas, size);
+  }
+
+  /// Halo + dot + name label on the capital, like the site's CountryPanel.
+  void _paintCapital(Canvas canvas, Size size) {
+    final cap = capital;
+    if (cap == null) return;
+    final cx = (cap.x - rx0) * zs, cy = (cap.y - ry0) * zs;
+    if (cx < 0 || cy < 0 || cx > size.width || cy > size.height) return;
+    final r = (size.width * 0.008).clamp(2.5, 5.0);
+    canvas.drawCircle(
+        Offset(cx, cy), r * 2.2, Paint()..color = kBg.withValues(alpha: 0.45));
+    canvas.drawCircle(Offset(cx, cy), r, Paint()..color = kText);
+    canvas.drawCircle(
+        Offset(cx, cy),
+        r,
+        Paint()
+          ..color = kBg
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1);
+    if (cap.name.isEmpty) return;
+    final fs = (size.width * 0.028).clamp(9.0, 13.0);
+    final tp = TextPainter(
+      text: TextSpan(
+        text: cap.name,
+        style: TextStyle(
+          color: kText,
+          fontSize: fs,
+          fontWeight: FontWeight.w700,
+          shadows: const [
+            Shadow(color: Colors.black, blurRadius: 3),
+            Shadow(color: Colors.black, blurRadius: 6),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    // Label above the dot, nudged back inside the canvas near the edges.
+    final lx = (cx - tp.width / 2).clamp(2.0, size.width - tp.width - 2);
+    var ly = cy - r * 2.2 - tp.height - 2;
+    if (ly < 2) ly = cy + r * 2.2 + 2;
+    tp.paint(canvas, Offset(lx, ly));
   }
 
   @override
@@ -230,5 +284,6 @@ class _MapPainter extends CustomPainter {
       old.highlight != highlight ||
       old.zs != zs ||
       old.rx0 != rx0 ||
-      old.ry0 != ry0;
+      old.ry0 != ry0 ||
+      old.capital != capital;
 }

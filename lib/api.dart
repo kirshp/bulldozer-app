@@ -131,12 +131,14 @@ class CountryItem {
 class Country {
   final String iso;
   final String name;
+  final String official; // official long-form name, '' when same as [name]
   final String region;
   final List<CountryItem> items;
 
   Country.fromJson(Map<String, dynamic> j)
       : iso = j['iso'] ?? '',
         name = j['name'] ?? '',
+        official = j['official'] ?? '',
         region = j['region'] ?? '',
         items = [
           for (final i in (j['items'] as List? ?? [])) CountryItem.fromJson(i)
@@ -147,6 +149,40 @@ Future<List<Country>> fetchCountryIndex() async => [
       for (final c in await fetchJson('/data/country-index.json') as List)
         Country.fromJson(c)
     ];
+
+/// Static per-country metadata for the country header (capital pre-projected
+/// into the app map's geo space, coat-of-arms URL, currency, ISO-2 code).
+class CountryMeta {
+  final String a2;
+  final String capital;
+  final double? capX; // capital in the 1000×500 map space, null if unknown
+  final double? capY;
+  final String coa; // coat-of-arms image URL ('' when missing)
+  final String curCode;
+  final String curName;
+  final String curSymbol;
+
+  CountryMeta.fromJson(Map<String, dynamic> j)
+      : a2 = j['a2'] ?? '',
+        capital = j['capital'] ?? '',
+        capX = (j['capX'] as num?)?.toDouble(),
+        capY = (j['capY'] as num?)?.toDouble(),
+        coa = j['coa'] ?? '',
+        curCode = j['curCode'] ?? '',
+        curName = j['curName'] ?? '',
+        curSymbol = j['curSymbol'] ?? '';
+}
+
+Map<String, CountryMeta>? _countryMetaCache;
+
+Future<Map<String, CountryMeta>> fetchCountryMeta() async {
+  if (_countryMetaCache != null) return _countryMetaCache!;
+  final j = await fetchJson('/data/country-meta.json') as Map<String, dynamic>;
+  return _countryMetaCache = {
+    for (final e in j.entries)
+      e.key: CountryMeta.fromJson(e.value as Map<String, dynamic>)
+  };
+}
 
 class Story {
   final String slug;

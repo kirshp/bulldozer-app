@@ -145,19 +145,58 @@ const _headline = <(String, List<String>)>[
 
 const _sectionMeta = [('macro', '📊 Statistics'), ('survey', '🗣️ Surveys')];
 
+/// Indicators to feature (in order) when a topic group is collapsed; expanding
+/// shows the full alphabetical list. Mirrors the site's CountryPanel PRIORITY:
+/// each slot lists fallback slugs and the first available fills it, so the
+/// collapsed top-3 stays economically meaningful even when a country is
+/// missing a leader (e.g. no Big Mac price for many markets).
+const _priority = <String, List<List<String>>>{
+  'economy': [
+    ['imf-gdp-usd', 'imf-gdp-ppp'],
+    ['bigmac-dollar-price'],
+    ['findex-digital-payments', 'wb-digital-payments'],
+    ['imf-govt-debt'],
+    ['imf-current-account'],
+    ['imf-fiscal-balance'],
+    ['gapminder-gini'],
+    ['findex-account-ownership', 'wb-account-ownership'],
+    ['imf-world-gdp-share'],
+    ['owid-extreme-poverty'],
+  ],
+  'demographics': [
+    ['gapminder-population', 'imf-population'],
+    ['gapminder-median-age'],
+    ['wb-sp-dyn-tfrt-in'],
+    ['gapminder-urban'],
+    ['gapminder-density'],
+    ['unhcr-refugees'],
+  ],
+};
+
 class _CountryPageState extends State<CountryPage> {
   String? _wiki;
+  CountryMeta? _meta; // capital / coat of arms / currency / ISO-2
   final Set<String> _expanded = {}; // 'kind:topic' groups shown in full
 
   @override
   void initState() {
     super.initState();
     _loadWiki();
+    _loadMeta();
   }
 
   Future<void> _loadWiki() async {
     final s = await fetchWikipediaSummary(widget.country.name);
     if (mounted) setState(() => _wiki = s);
+  }
+
+  Future<void> _loadMeta() async {
+    try {
+      final all = await fetchCountryMeta();
+      if (mounted) setState(() => _meta = all[widget.country.iso]);
+    } catch (_) {
+      // header extras are decorative — the page works without them
+    }
   }
 
   CountryItem? _find(Country c, String slug) {
@@ -205,8 +244,31 @@ class _CountryPageState extends State<CountryPage> {
     );
   }
 
-  /// Statistics then Surveys, each grouped by topic; every topic shows the
-  /// first 3 indicators with a "Show all" toggle for the rest.
+  /// Collapsed view of a topic: one row per priority slot (first available
+  /// slug wins), padded from the alphabetical list when slots run out.
+  List<CountryItem> _collapsedRows(String topic, List<CountryItem> rows) {
+    final bySlug = {for (final it in rows) it.slug: it};
+    final featured = <CountryItem>[];
+    for (final slot in _priority[topic] ?? const <List<String>>[]) {
+      for (final s in slot) {
+        final it = bySlug[s];
+        if (it != null && !featured.contains(it)) {
+          featured.add(it);
+          break;
+        }
+      }
+      if (featured.length >= 3) break;
+    }
+    for (final it in rows) {
+      if (featured.length >= 3) break;
+      if (!featured.contains(it)) featured.add(it);
+    }
+    return featured.take(3).toList();
+  }
+
+  /// Statistics then Surveys, each grouped by topic; every topic shows a
+  /// curated top-3 with a "Show all" toggle revealing the full alphabetical
+  /// list.
   List<Widget> _sections(List<CountryItem> rest) {
     final out = <Widget>[];
     for (final sec in _sectionMeta) {
@@ -228,7 +290,7 @@ class _CountryPageState extends State<CountryPage> {
           ..sort((a, b) => a.title.compareTo(b.title));
         final key = '${sec.$1}:$t';
         final expanded = _expanded.contains(key);
-        final shown = expanded ? rows : rows.take(3).toList();
+        final shown = expanded ? rows : _collapsedRows(t, rows);
         out.add(Padding(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
           child: Text(topicLabels[t] ?? t,
@@ -256,6 +318,77 @@ class _CountryPageState extends State<CountryPage> {
       }
     }
     return out;
+  }
+
+  Widget _codeBadge(String text, {String? tooltip}) {
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: kBgCard,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: kBorder, width: 0.5),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+    );
+    return tooltip == null ? chip : Tooltip(message: tooltip, child: chip);
+  }
+
+  /// Coat of arms + official name + ISO/currency badges, like the site's
+  /// country card. Renders progressively as [_meta] arrives.
+  Widget _header(Country country) {
+    final m = _meta;
+    final coa = m != null && m.coa.isNotEmpty
+        ? Image.network(
+            '${m.coa}?width=120',
+            width: 52,
+            headers: const {'User-Agent': 'BullDozerStats/1.0'},
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          )
+        : null;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (coa != null) ...[coa, const SizedBox(width: 12)],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (country.official.isNotEmpty &&
+                  country.official != country.name)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(country.official,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: kTextDim,
+                          fontStyle: FontStyle.italic)),
+                ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _codeBadge(country.iso, tooltip: 'ISO 3166-1 alpha-3'),
+                  if (m != null && m.a2.isNotEmpty)
+                    _codeBadge(m.a2, tooltip: 'ISO 3166-1 alpha-2'),
+                  if (m != null && m.curCode.isNotEmpty)
+                    _codeBadge(
+                        '${m.curSymbol.isNotEmpty ? '${m.curSymbol} ' : ''}'
+                        '${m.curName} (${m.curCode})',
+                        tooltip: 'Currency'),
+                  if (m != null && m.capital.isNotEmpty)
+                    _codeBadge('🏛️ ${m.capital}', tooltip: 'Capital'),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text('${country.region} · ${country.items.length} indicators',
+                  style: const TextStyle(fontSize: 12, color: kTextDim)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   /// Time series for this country in [item]'s dataset, shown as a line chart.
@@ -353,18 +486,20 @@ class _CountryPageState extends State<CountryPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Map zoomed to and highlighting the country.
+          // Map zoomed to and highlighting the country, capital marked.
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Choropleth(
               values: {country.iso: 1},
               highlightIso: country.iso,
               zoomIso: country.iso,
+              capital: _meta?.capX != null
+                  ? CapitalMarker(_meta!.capital, _meta!.capX!, _meta!.capY!)
+                  : null,
             ),
           ),
           const SizedBox(height: 10),
-          Text('${country.region} · ${country.items.length} indicators',
-              style: const TextStyle(fontSize: 12, color: kTextDim)),
+          _header(country),
           if (headline.isNotEmpty) ...[
             const SizedBox(height: 12),
             GridView.count(
