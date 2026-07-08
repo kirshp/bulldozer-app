@@ -64,12 +64,14 @@ class ChartsPage extends StatefulWidget {
   final String? kind; // 'macro' | 'survey'
   final List<String>? slugs; // curated set, overrides kind (Biz)
   final String? featuredSlug; // dataset shown as a featured hero on top
+  final String featuredStyle; // 'bars' | 'trend' | 'dots' — distinct per tab
   const ChartsPage(
       {super.key,
       required this.title,
       this.kind,
       this.slugs,
-      this.featuredSlug});
+      this.featuredSlug,
+      this.featuredStyle = 'bars'});
 
   @override
   State<ChartsPage> createState() => _ChartsPageState();
@@ -79,6 +81,7 @@ class _ChartsPageState extends State<ChartsPage> {
   String _query = '';
   String _topic = 'all';
   List<Observation> _featTop = [];
+  Dataset? _featDs; // full dataset, for the trend/dots hero styles
 
   @override
   void initState() {
@@ -94,10 +97,69 @@ class _ChartsPageState extends State<ChartsPage> {
       final last = ds.periods.last;
       final rows = ds.data.where((o) => o.period == last).toList()
         ..sort((a, b) => b.value.compareTo(a.value));
-      if (mounted) setState(() => _featTop = rows.take(6).toList());
+      if (mounted) {
+        setState(() {
+          _featDs = ds;
+          _featTop = rows.take(6).toList();
+        });
+      }
     } catch (_) {
       // hero is decorative
     }
+  }
+
+  /// Distinct hero per tab: Biz keeps ranked bars, Stats gets the world
+  /// trend line, Polls a dot distribution — no more identical "mattresses".
+  Widget _buildHero(CatalogEntry featEntry) {
+    void onTap() => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => DatasetPage(entry: featEntry)));
+    if (widget.featuredStyle == 'trend' && _featDs != null) {
+      // world average per period — a line that actually moves
+      final byPeriod = <String, List<double>>{};
+      for (final o in _featDs!.data) {
+        byPeriod.putIfAbsent(o.period, () => []).add(o.value);
+      }
+      final points = byPeriod.keys.toList()..sort();
+      final avg = [
+        for (final p in points)
+          (p, byPeriod[p]!.reduce((a, b) => a + b) / byPeriod[p]!.length)
+      ];
+      if (avg.length >= 2) {
+        return HeroShell(
+          tag: 'Featured · ${featEntry.source}',
+          title: 'World ${featEntry.title.toLowerCase()}: '
+              '${formatValue(avg.first.$2)} → ${formatValue(avg.last.$2)}',
+          footer: 'See the full ranking →',
+          onTap: onTap,
+          child: TrendChart(
+              points: avg, highlightPeriod: avg.last.$1, height: 140),
+        );
+      }
+    }
+    if (widget.featuredStyle == 'dots' && _featDs != null) {
+      final last = _featDs!.periods.last;
+      final rows = _featDs!.data.where((o) => o.period == last).toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      return HeroShell(
+        tag: 'Featured · ${featEntry.source}',
+        title: '${_featTop.first.entity} leads — ${featEntry.title}',
+        footer: 'Every dot is a country · see them all →',
+        onTap: onTap,
+        child: DotStrip(items: [
+          for (final o in rows) ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+        ]),
+      );
+    }
+    return FeaturedCard(
+      tag: 'Featured · ${featEntry.source}',
+      title: '${_featTop.first.entity} tops ${featEntry.title}',
+      bars: [
+        for (final o in _featTop)
+          ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+      ],
+      footer: 'See the full ranking →',
+      onTap: onTap,
+    );
   }
 
   @override
@@ -133,18 +195,18 @@ class _ChartsPageState extends State<ChartsPage> {
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search ${pool.length} indicators…',
-              hintStyle: const TextStyle(color: kTextDim, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: kTextDim, size: 20),
+              hintStyle: TextStyle(color: kTextDim, fontSize: 14),
+              prefixIcon: Icon(Icons.search, color: kTextDim, size: 20),
               isDense: true,
               filled: true,
               fillColor: kBgCard,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: kBorder, width: 0.5),
+                borderSide: BorderSide(color: kBorder, width: 0.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: kBorder, width: 0.5),
+                borderSide: BorderSide(color: kBorder, width: 0.5),
               ),
             ),
           ),
@@ -194,18 +256,7 @@ class _ChartsPageState extends State<ChartsPage> {
                 if (showFeatured && idx == 0) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-                    child: FeaturedCard(
-                      tag: 'Featured · ${featEntry.source}',
-                      title: '${_featTop.first.entity} tops ${featEntry.title}',
-                      bars: [
-                        for (final o in _featTop)
-                          ('${flagFromIso(o.iso)} ${o.entity}', o.value)
-                      ],
-                      footer: 'See the full ranking →',
-                      onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => DatasetPage(entry: featEntry))),
-                    ),
+                    child: _buildHero(featEntry),
                   );
                 }
                 final e = shown[idx - headers];
@@ -218,12 +269,12 @@ class _ChartsPageState extends State<ChartsPage> {
                           fontSize: 14, fontWeight: FontWeight.w600)),
                   subtitle: Text(
                     '${topicLabels[e.topic] ?? e.topic} · ${e.source}',
-                    style: const TextStyle(fontSize: 12, color: kTextDim),
+                    style: TextStyle(fontSize: 12, color: kTextDim),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   trailing:
-                      const Icon(Icons.chevron_right, color: kTextDim, size: 20),
+                      Icon(Icons.chevron_right, color: kTextDim, size: 20),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => DatasetPage(entry: e))),
                 ),
@@ -300,10 +351,10 @@ class _DatasetPageState extends State<DatasetPage> {
               padding: const EdgeInsets.all(24),
               child: Text('Couldn\'t load data.\n$_error',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: kTextDim)),
+                  style: TextStyle(color: kTextDim)),
             ))
           : _ds == null
-              ? const Center(child: CircularProgressIndicator(color: kAmber))
+              ? Center(child: CircularProgressIndicator(color: kAmber))
               : _buildBody(),
     );
   }
@@ -327,10 +378,10 @@ class _DatasetPageState extends State<DatasetPage> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(ds.summary,
-            style: const TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
+            style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
         const SizedBox(height: 6),
         Text('${ds.source} · ${ds.license} · ${ds.unit}',
-            style: const TextStyle(fontSize: 11, color: kTextDim)),
+            style: TextStyle(fontSize: 11, color: kTextDim)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 6,
@@ -390,7 +441,7 @@ class _DatasetPageState extends State<DatasetPage> {
           ),
           const SizedBox(height: 8),
           Text('Tap a country for its trend · $_period · ${ds.unit}',
-              style: const TextStyle(fontSize: 11, color: kTextDim)),
+              style: TextStyle(fontSize: 11, color: kTextDim)),
         ] else ...[
           for (var i = 0; i < shown.length; i++)
             _BarRow(
@@ -404,7 +455,7 @@ class _DatasetPageState extends State<DatasetPage> {
             TextButton(
               onPressed: () => setState(() => _showAll = true),
               child: Text('Show all ${rows.length}',
-                  style: const TextStyle(color: kAmber)),
+                  style: TextStyle(color: kAmber)),
             ),
         ],
       ],
@@ -431,7 +482,7 @@ class _DatasetPageState extends State<DatasetPage> {
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             Text('${ds.title} · ${ds.unit}',
-                style: const TextStyle(fontSize: 12, color: kTextDim)),
+                style: TextStyle(fontSize: 12, color: kTextDim)),
             const SizedBox(height: 16),
             TrendChart(
               points: [for (final o in series) (o.period, o.value)],
@@ -472,7 +523,7 @@ class _BarRow extends StatelessWidget {
             SizedBox(
                 width: 26,
                 child: Text('$rank',
-                    style: const TextStyle(fontSize: 11, color: kTextDim))),
+                    style: TextStyle(fontSize: 11, color: kTextDim))),
             SizedBox(
               width: 110,
               child: Text(obs.entity,
@@ -580,7 +631,7 @@ class _TrendSummary extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text('${first.period} → ${last.period}',
-            style: const TextStyle(fontSize: 12, color: kTextDim)),
+            style: TextStyle(fontSize: 12, color: kTextDim)),
         Row(
           children: [
             Icon(up ? Icons.arrow_upward : Icons.arrow_downward,

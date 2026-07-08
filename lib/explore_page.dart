@@ -111,12 +111,12 @@ class _ExplorePageState extends State<ExplorePage> {
           _axisPicker('X', _x, () => _pick(true)),
           const SizedBox(height: 20),
           if (_loading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 60),
               child: Center(child: CircularProgressIndicator(color: kAmber)),
             )
           else if (points.length < 2)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 60),
               child: Center(
                   child: Text('Not enough overlapping countries.',
@@ -130,7 +130,7 @@ class _ExplorePageState extends State<ExplorePage> {
             const SizedBox(height: 10),
             Text(
                 '${points.length} countries · tap a dot for its name and values',
-                style: const TextStyle(fontSize: 11, color: kTextDim)),
+                style: TextStyle(fontSize: 11, color: kTextDim)),
           ],
         ],
       ),
@@ -159,7 +159,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(axis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, fontWeight: FontWeight.w800, color: kAmber)),
             ),
             const SizedBox(width: 10),
@@ -168,7 +168,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700)),
             ),
-            const Icon(Icons.expand_more, color: kTextDim),
+            Icon(Icons.expand_more, color: kTextDim),
           ],
         ),
       ),
@@ -201,13 +201,13 @@ class _ExplorePageState extends State<ExplorePage> {
         gridData: FlGridData(
           show: true,
           getDrawingHorizontalLine: (_) =>
-              const FlLine(color: kBorder, strokeWidth: 0.4),
+              FlLine(color: kBorder, strokeWidth: 0.4),
           getDrawingVerticalLine: (_) =>
-              const FlLine(color: kBorder, strokeWidth: 0.4),
+              FlLine(color: kBorder, strokeWidth: 0.4),
         ),
         borderData: FlBorderData(
             show: true,
-            border: const Border(
+            border: Border(
                 left: BorderSide(color: kBorder),
                 bottom: BorderSide(color: kBorder))),
         titlesData: FlTitlesData(
@@ -220,14 +220,14 @@ class _ExplorePageState extends State<ExplorePage> {
                 showTitles: true,
                 reservedSize: 40,
                 getTitlesWidget: (v, _) => Text(formatValue(v),
-                    style: const TextStyle(fontSize: 9, color: kTextDim))),
+                    style: TextStyle(fontSize: 9, color: kTextDim))),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 22,
                 getTitlesWidget: (v, _) => Text(formatValue(v),
-                    style: const TextStyle(fontSize: 9, color: kTextDim))),
+                    style: TextStyle(fontSize: 9, color: kTextDim))),
           ),
         ),
         scatterTouchData: ScatterTouchData(
@@ -240,13 +240,13 @@ class _ExplorePageState extends State<ExplorePage> {
                   orElse: () => ('', spot.x, spot.y));
               return ScatterTooltipItem(
                 match.$1,
-                textStyle: const TextStyle(
+                textStyle: TextStyle(
                     color: kText, fontSize: 12, fontWeight: FontWeight.w700),
                 children: [
                   TextSpan(
                     text:
                         '\n${formatValue(spot.x)} · ${formatValue(spot.y)}',
-                    style: const TextStyle(color: kTextDim, fontSize: 11),
+                    style: TextStyle(color: kTextDim, fontSize: 11),
                   ),
                 ],
               );

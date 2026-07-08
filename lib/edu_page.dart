@@ -52,9 +52,9 @@ class EduPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('Edu', style: pageTitleStyle),
+        Text('Edu', style: pageTitleStyle),
         const SizedBox(height: 4),
-        const Text('Learn to read — and build — data like this.',
+        Text('Learn to read — and build — data like this.',
             style: TextStyle(fontSize: 12, color: kTextDim)),
         const SizedBox(height: 12),
         for (final s in sections)
@@ -81,12 +81,12 @@ class EduPage extends StatelessWidget {
                                   height: 1.2)),
                           const SizedBox(height: 4),
                           Text(s.$3,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12, color: kTextDim, height: 1.35)),
                         ],
                       ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(left: 6, top: 2),
                       child: Icon(Icons.north_east, color: kTextDim, size: 15),
                     ),
@@ -96,7 +96,7 @@ class EduPage extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 16),
-        const Center(
+        Center(
           child: Text('Reads on the site · shpara.com/bulldozer/edu',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),

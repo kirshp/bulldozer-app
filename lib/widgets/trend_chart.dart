@@ -26,7 +26,7 @@ class TrendChart extends StatelessWidget {
         child: Center(
           child: Text(
             points.isEmpty ? '—' : formatValue(points.first.$2),
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 22, fontWeight: FontWeight.w700, color: kAmber),
           ),
         ),
@@ -48,7 +48,7 @@ class TrendChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (_) =>
-                const FlLine(color: kBorder, strokeWidth: 0.5),
+                FlLine(color: kBorder, strokeWidth: 0.5),
           ),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
@@ -61,7 +61,7 @@ class TrendChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 42,
                 getTitlesWidget: (v, meta) => Text(formatValue(v),
-                    style: const TextStyle(fontSize: 10, color: kTextDim)),
+                    style: TextStyle(fontSize: 10, color: kTextDim)),
               ),
             ),
             bottomTitles: AxisTitles(
@@ -84,7 +84,7 @@ class TrendChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(points[i].$1,
                         style:
-                            const TextStyle(fontSize: 10, color: kTextDim)),
+                            TextStyle(fontSize: 10, color: kTextDim)),
                   );
                 },
               ),
@@ -98,7 +98,7 @@ class TrendChart extends StatelessWidget {
                 final label = (i >= 0 && i < points.length) ? points[i].$1 : '';
                 return LineTooltipItem(
                   '$label\n${formatValue(s.y)}',
-                  const TextStyle(
+                  TextStyle(
                       color: kText, fontSize: 12, fontWeight: FontWeight.w600),
                 );
               }).toList(),

@@ -118,7 +118,7 @@ class _ChoroplethState extends State<Choropleth> {
   Widget build(BuildContext context) {
     final geo = _geo;
     if (geo == null) {
-      return const AspectRatio(
+      return AspectRatio(
         aspectRatio: 2,
         child: Center(child: CircularProgressIndicator(color: kAmber)),
       );
@@ -190,14 +190,15 @@ class _MapPainter extends CustomPainter {
   _MapPainter(this.geo, this.values, this.minV, this.maxV, this.highlight,
       this.rx0, this.ry0, this.zs, this.capital);
 
-  // Visible "land" grey so countries read on the dark background even with no
-  // data (e.g. the country-profile locator map, which highlights just one).
-  static final _noData = Paint()..color = const Color(0xFF2A2F36);
-  static final _border = Paint()
+  // Visible "land" grey so countries read on the background even with no
+  // data. Not static — the palette flips with the theme.
+  final _noData = Paint()
+    ..color = isLight ? const Color(0xFFDDD8CC) : const Color(0xFF2A2F36);
+  final _border = Paint()
     ..color = kBg
     ..style = PaintingStyle.stroke
     ..strokeWidth = 0.4;
-  static const _low = Color(0xFF3A2A00);
+  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF3A2A00);
 
   @override
   void paint(Canvas canvas, Size size) {

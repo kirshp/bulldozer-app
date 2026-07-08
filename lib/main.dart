@@ -9,6 +9,7 @@ import 'explore_page.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
 import 'notify.dart';
+import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
@@ -20,6 +21,7 @@ void main() {
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
   loadFavorites(); // starred countries/indicators from disk
   initNotify(); // local release reminders (Ativa-style, no push server)
+  loadTheme(); // light/dark preference from disk
 }
 
 class BulldozerApp extends StatelessWidget {
@@ -27,11 +29,17 @@ class BulldozerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BullDozer',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      home: const HomeShell(),
+    // Rebuilds the whole tree on theme toggle — the k-colors are getters
+    // backed by themeNotifier, same palettes as the site.
+    return ValueListenableBuilder(
+      valueListenable: themeNotifier,
+      builder: (_, _, _) => MaterialApp(
+        title: 'BullDozer',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        // new key on toggle → the whole tree rebuilds with the new palette
+        home: HomeShell(key: ValueKey(isLight)),
+      ),
     );
   }
 }
@@ -64,7 +72,8 @@ class _HomeShellState extends State<HomeShell> {
                   key: ValueKey('stats${catalog.length}'),
                   title: 'Statistics',
                   kind: 'macro',
-                  featuredSlug: 'gapminder-life-expectancy'),
+                  featuredSlug: 'gapminder-life-expectancy',
+                  featuredStyle: 'trend'),
               ChartsPage(
                   key: ValueKey('biz${catalog.length}'),
                   title: 'Business & markets',
@@ -74,7 +83,8 @@ class _HomeShellState extends State<HomeShell> {
                   key: ValueKey('polls${catalog.length}'),
                   title: 'Polls',
                   kind: 'survey',
-                  featuredSlug: 'afro-democracy-support'),
+                  featuredSlug: 'afro-democracy-support',
+                  featuredStyle: 'dots'),
               const CountriesPage(),
               const EduPage(),
             ],
@@ -118,11 +128,11 @@ class _HomeShellState extends State<HomeShell> {
                 ],
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: brandTagline,
             ),
-            const Divider(color: kBorder, height: 1),
+            Divider(color: kBorder, height: 1),
             _menuItem(context, Icons.home_outlined, 'Home', 0),
             _menuItem(context, Icons.bar_chart_outlined, 'Statistics', 1),
             _menuItem(
@@ -130,11 +140,21 @@ class _HomeShellState extends State<HomeShell> {
             _menuItem(context, Icons.how_to_vote_outlined, 'Polls', 3),
             _menuItem(context, Icons.public_outlined, 'Countries', 4),
             _menuItem(context, Icons.school_outlined, 'Edu', 5),
-            const Divider(color: kBorder, height: 1),
+            Divider(color: kBorder, height: 1),
             ListTile(
-              leading: const Icon(Icons.scatter_plot_outlined,
+              leading: Text(isLight ? '🌙' : '☀️',
+                  style: const TextStyle(fontSize: 18)),
+              title: Text(isLight ? 'Dark theme' : 'Light theme',
+                  style: TextStyle(fontSize: 15, color: kText)),
+              onTap: () {
+                Navigator.pop(context);
+                toggleTheme();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.scatter_plot_outlined,
                   color: kAmber, size: 22),
-              title: const Text('Explore — X vs Y',
+              title: Text('Explore — X vs Y',
                   style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w600, color: kText)),
               onTap: () {
@@ -145,8 +165,8 @@ class _HomeShellState extends State<HomeShell> {
             ),
             ListTile(
               leading:
-                  const Icon(Icons.extension_outlined, color: kAmber, size: 22),
-              title: const Text('Country Quiz',
+                  Icon(Icons.extension_outlined, color: kAmber, size: 22),
+              title: Text('Country Quiz',
                   style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w600, color: kText)),
               onTap: () {
@@ -159,10 +179,10 @@ class _HomeShellState extends State<HomeShell> {
             _linkItem(
                 context, Icons.open_in_new, 'Open full website', '/'),
             ListTile(
-              leading: const Icon(Icons.code, color: kTextDim, size: 22),
-              title: const Text('GitHub — app source',
+              leading: Icon(Icons.code, color: kTextDim, size: 22),
+              title: Text('GitHub — app source',
                   style: TextStyle(fontSize: 15, color: kText)),
-              trailing: const Icon(Icons.north_east, color: kTextDim, size: 15),
+              trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
               onTap: () {
                 Navigator.pop(context);
                 launchUrl(Uri.parse('https://github.com/kirshp/bulldozer-app'),
@@ -170,8 +190,8 @@ class _HomeShellState extends State<HomeShell> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.mail_outline, color: kTextDim, size: 22),
-              title: const Text('Contact developer',
+              leading: Icon(Icons.mail_outline, color: kTextDim, size: 22),
+              title: Text('Contact developer',
                   style: TextStyle(fontSize: 15, color: kText)),
               onTap: () {
                 Navigator.pop(context);
@@ -182,15 +202,15 @@ class _HomeShellState extends State<HomeShell> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.info_outline, color: kTextDim, size: 22),
-              title: const Text('About',
+              leading: Icon(Icons.info_outline, color: kTextDim, size: 22),
+              title: Text('About',
                   style: TextStyle(fontSize: 15, color: kText)),
               onTap: () {
                 Navigator.pop(context);
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.12.0',
+                  applicationVersion: '1.13.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -212,8 +232,8 @@ class _HomeShellState extends State<HomeShell> {
       BuildContext context, IconData icon, String label, String path) {
     return ListTile(
       leading: Icon(icon, color: kTextDim, size: 22),
-      title: Text(label, style: const TextStyle(fontSize: 15, color: kText)),
-      trailing: const Icon(Icons.north_east, color: kTextDim, size: 15),
+      title: Text(label, style: TextStyle(fontSize: 15, color: kText)),
+      trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
       onTap: () {
         Navigator.pop(context);
         launchUrl(Uri.parse('$kBaseUrl$path'),
@@ -264,6 +284,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Observation> _happyTop = [];
+  Map<String, double> _happyValues = {}; // full map for the choropleth hero
   List<Story> _stories = [];
   List<Release> _releases = [];
   List<Country> _countries = []; // resolves starred ISOs to country objects
@@ -334,7 +355,15 @@ class _HomePageState extends State<HomePage> {
       final last = ds.periods.last;
       final rows = ds.data.where((o) => o.period == last).toList()
         ..sort((a, b) => b.value.compareTo(a.value));
-      if (mounted) setState(() => _happyTop = rows.take(6).toList());
+      if (mounted) {
+        setState(() {
+          _happyTop = rows.take(6).toList();
+          _happyValues = {
+            for (final o in rows)
+              if (o.iso.isNotEmpty) o.iso: o.value
+          };
+        });
+      }
     } catch (_) {
       // featured bars are decorative — home works without them
     }
@@ -384,15 +413,24 @@ class _HomePageState extends State<HomePage> {
                 color: kAmber.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text('beta',
+              child: Text('beta',
                   style: TextStyle(
                       fontSize: 11, fontWeight: FontWeight.w700, color: kAmber)),
+            ),
+            // Light/dark toggle — same sun as the site header.
+            IconButton(
+              onPressed: toggleTheme,
+              icon: Text(isLight ? '🌙' : '☀️',
+                  style: const TextStyle(fontSize: 18)),
+              tooltip: 'Toggle light/dark theme',
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
             ),
             // Global search — countries and indicators from one field.
             IconButton(
               onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SearchPage())),
-              icon: const Icon(Icons.search, color: kText),
+              icon: Icon(Icons.search, color: kText),
               tooltip: 'Search',
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
@@ -400,7 +438,7 @@ class _HomePageState extends State<HomePage> {
             // Hamburger — opens the menu drawer from the right.
             IconButton(
               onPressed: () => Scaffold.of(context).openEndDrawer(),
-              icon: const Icon(Icons.menu, color: kText),
+              icon: Icon(Icons.menu, color: kText),
               tooltip: 'Menu',
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
@@ -410,18 +448,20 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 10),
         brandTagline,
         const SizedBox(height: 16),
-        // Featured data story — a rich block with a mini ranked chart.
-        FeaturedCard(
+        // Featured data story — the happiness ranking as a world map.
+        HeroShell(
           tag: 'Featured · World Happiness Report',
           title: _happyTop.isEmpty
               ? 'The world’s happiest countries'
               : '${_happyTop.first.entity} leads the happiness ranking',
-          bars: [
-            for (final o in _happyTop)
-              ('${flagFromIso(o.iso)} ${o.entity}', o.value)
-          ],
           footer: 'Read the story →',
           onTap: () => _openStory('happiest-countries'),
+          child: _happyValues.isEmpty
+              ? null
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Choropleth(values: _happyValues),
+                ),
         ),
         const SizedBox(height: 10),
         // Country quiz entry — a bright amber strip so it pops off the feed.
@@ -432,7 +472,7 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(12),
             child: Ink(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                     colors: [kAmber, kOrange],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight),
@@ -448,7 +488,7 @@ class _HomePageState extends State<HomePage> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text('Country Quiz',
                               style: TextStyle(
                                   fontSize: 15,
@@ -468,7 +508,7 @@ class _HomePageState extends State<HomePage> {
                         color: kBg,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Text('Play',
+                      child: Text('Play',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -543,11 +583,11 @@ class _HomePageState extends State<HomePage> {
                       child: ListTile(
                         dense: true,
                         leading:
-                            const Icon(Icons.star, color: kAmber, size: 18),
+                            Icon(Icons.star, color: kAmber, size: 18),
                         title: Text(e.title,
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w600)),
-                        trailing: const Icon(Icons.chevron_right,
+                        trailing: Icon(Icons.chevron_right,
                             color: kTextDim, size: 20),
                         onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
@@ -571,7 +611,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Tap the bell to get a reminder when new data is due.',
+          Text('Tap the bell to get a reminder when new data is due.',
               style: TextStyle(fontSize: 12, color: kTextDim)),
           const SizedBox(height: 8),
           ValueListenableBuilder(
@@ -588,7 +628,7 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(
                           '${r.window} · ${r.kind == 'survey' ? 'survey' : 'macro'}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11, color: kTextDim)),
                       trailing: IconButton(
                         icon: Icon(
@@ -614,11 +654,11 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 4),
-        const Text('Visual stories built on public data.',
+        Text('Visual stories built on public data.',
             style: TextStyle(fontSize: 12, color: kTextDim)),
         const SizedBox(height: 10),
         if (_stories.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
                 child: CircularProgressIndicator(color: kAmber, strokeWidth: 2)),
@@ -627,7 +667,7 @@ class _HomePageState extends State<HomePage> {
           for (final s in _stories.where((s) => s.slug != 'happiest-countries'))
             _StoryCard(story: s, onTap: () => _openStory(s.slug)),
         const SizedBox(height: 16),
-        const Center(
+        Center(
           child: Text('Open data · full site at shpara.com/bulldozer',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),
@@ -655,7 +695,7 @@ class _StoryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(story.tag.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 10,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w700,
@@ -666,10 +706,10 @@ class _StoryCard extends StatelessWidget {
                       fontSize: 15, fontWeight: FontWeight.w700, height: 1.2)),
               const SizedBox(height: 4),
               Text(story.dek,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12, color: kTextDim, height: 1.35)),
               const SizedBox(height: 8),
-              const Text('Read on the site ↗',
+              Text('Read on the site ↗',
                   style: TextStyle(
                       fontSize: 11, fontWeight: FontWeight.w600, color: kAmber)),
             ],
@@ -698,10 +738,10 @@ class _StatBox extends StatelessWidget {
         child: Column(
           children: [
             Text(value,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 20, fontWeight: FontWeight.w800, color: kAmber)),
             Text(label,
-                style: const TextStyle(fontSize: 11, color: kTextDim)),
+                style: TextStyle(fontSize: 11, color: kTextDim)),
           ],
         ),
       ),

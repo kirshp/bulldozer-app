@@ -117,13 +117,13 @@ class _QuizPageState extends State<QuizPage> {
       return _centered(Column(mainAxisSize: MainAxisSize.min, children: [
         Text('Couldn\'t load the quiz.\n$_error',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: kTextDim)),
+            style: TextStyle(color: kTextDim)),
         const SizedBox(height: 12),
         FilledButton(onPressed: _start, child: const Text('Retry')),
       ]));
     }
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: kAmber));
+      return Center(child: CircularProgressIndicator(color: kAmber));
     }
     if (_answers == null) return _startScreen();
     if (_round >= _rounds) return _endScreen();
@@ -141,9 +141,9 @@ class _QuizPageState extends State<QuizPage> {
       children: [
         const Text('🌍', style: TextStyle(fontSize: 56)),
         const SizedBox(height: 12),
-        const Text('Guess the country', style: pageTitleStyle),
+        Text('Guess the country', style: pageTitleStyle),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           '10 rounds. Real data as clues — population, happiness, corruption…\nFewer hints, more points.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: kTextDim, height: 1.5),
@@ -151,7 +151,7 @@ class _QuizPageState extends State<QuizPage> {
         if (_best > 0) ...[
           const SizedBox(height: 8),
           Text('Session best: $_best / ${_rounds * _maxHints}',
-              style: const TextStyle(fontSize: 12, color: kAmber)),
+              style: TextStyle(fontSize: 12, color: kAmber)),
         ],
         const SizedBox(height: 20),
         FilledButton.icon(
@@ -175,7 +175,7 @@ class _QuizPageState extends State<QuizPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Round ${_round + 1} / $_rounds',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w700, color: kAmber)),
             Text('Score: $_score',
                 style:
@@ -212,11 +212,11 @@ class _QuizPageState extends State<QuizPage> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       gradient:
-                          const LinearGradient(colors: [kAmber, kOrange]),
+                          LinearGradient(colors: [kAmber, kOrange]),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text('worth $_worth',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: kBg)),
@@ -231,7 +231,7 @@ class _QuizPageState extends State<QuizPage> {
                   decoration: BoxDecoration(
                     color: kBgElev,
                     borderRadius: BorderRadius.circular(8),
-                    border: const Border(
+                    border: Border(
                         left: BorderSide(color: kAmber, width: 3)),
                   ),
                   child: Text('${_hintEmoji(i)} ${_hints[i]}',
@@ -249,14 +249,14 @@ class _QuizPageState extends State<QuizPage> {
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: () => setState(() => _hintsShown++),
-                    icon: const Icon(Icons.lightbulb_outline,
+                    icon: Icon(Icons.lightbulb_outline,
                         size: 16, color: kAmber),
                     label: Text(
                         _hintsShown == _maxHints - 1
                             ? 'Last hint: the flag'
                             : 'One more hint (−1 point)',
                         style:
-                            const TextStyle(fontSize: 12, color: kAmber)),
+                            TextStyle(fontSize: 12, color: kAmber)),
                   ),
                 ),
               // 5th hint is the flag, like on the site
@@ -306,10 +306,10 @@ class _QuizPageState extends State<QuizPage> {
         Text(_score >= 30 ? '🎉' : '🌍', style: const TextStyle(fontSize: 56)),
         const SizedBox(height: 8),
         Text('$_score / ${_rounds * _maxHints}',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 40, fontWeight: FontWeight.w800, color: kAmber)),
         Text('Session best: $_best',
-            style: const TextStyle(fontSize: 12, color: kTextDim)),
+            style: TextStyle(fontSize: 12, color: kTextDim)),
         const SizedBox(height: 10),
         Text(grid, style: const TextStyle(fontSize: 18, letterSpacing: 2)),
         const SizedBox(height: 10),
@@ -373,9 +373,9 @@ class _OptionButton extends StatelessWidget {
                       fontSize: 14, fontWeight: FontWeight.w600)),
             ),
             if (answered && isAnswer)
-              const Icon(Icons.check_circle, color: kUp, size: 18),
+              Icon(Icons.check_circle, color: kUp, size: 18),
             if (answered && isPicked && !isAnswer)
-              const Icon(Icons.cancel, color: kDown, size: 18),
+              Icon(Icons.cancel, color: kDown, size: 18),
           ],
         ),
       ),

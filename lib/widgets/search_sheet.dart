@@ -41,7 +41,7 @@ void showSearchSheet<T>(
                                 fontSize: 16, fontWeight: FontWeight.w700)),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: kTextDim),
+                        icon: Icon(Icons.close, color: kTextDim),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -55,19 +55,19 @@ void showSearchSheet<T>(
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Search…',
-                      hintStyle: const TextStyle(color: kTextDim, fontSize: 14),
+                      hintStyle: TextStyle(color: kTextDim, fontSize: 14),
                       prefixIcon:
-                          const Icon(Icons.search, color: kTextDim, size: 20),
+                          Icon(Icons.search, color: kTextDim, size: 20),
                       isDense: true,
                       filled: true,
                       fillColor: kBgCard,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: kBorder, width: 0.5),
+                        borderSide: BorderSide(color: kBorder, width: 0.5),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: kBorder, width: 0.5),
+                        borderSide: BorderSide(color: kBorder, width: 0.5),
                       ),
                     ),
                   ),
@@ -83,7 +83,7 @@ void showSearchSheet<T>(
                               fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(sub(shown[i]),
                           style:
-                              const TextStyle(fontSize: 12, color: kTextDim)),
+                              TextStyle(fontSize: 12, color: kTextDim)),
                       onTap: () {
                         Navigator.pop(ctx);
                         onPick(shown[i]);

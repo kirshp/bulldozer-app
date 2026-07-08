@@ -55,7 +55,7 @@ class _SearchPageState extends State<SearchPage> {
           autofocus: true,
           onChanged: (v) => setState(() => _q = v),
           style: const TextStyle(fontSize: 16),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Country or indicator…',
             hintStyle: TextStyle(color: kTextDim),
             border: InputBorder.none,
@@ -63,14 +63,14 @@ class _SearchPageState extends State<SearchPage> {
         ),
       ),
       body: q.isEmpty
-          ? const Center(
+          ? Center(
               child: Text('Search countries and indicators',
                   style: TextStyle(color: kTextDim, fontSize: 13)))
           : ListView(
               padding: const EdgeInsets.all(12),
               children: [
                 if (countries.isNotEmpty) ...[
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(4, 4, 4, 6),
                     child: Text('COUNTRIES',
                         style: TextStyle(
@@ -89,7 +89,7 @@ class _SearchPageState extends State<SearchPage> {
                               fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(c.region,
                           style:
-                              const TextStyle(fontSize: 11, color: kTextDim)),
+                              TextStyle(fontSize: 11, color: kTextDim)),
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => CountryPage(
@@ -97,7 +97,7 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                 ],
                 if (datasets.isNotEmpty) ...[
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(4, 12, 4, 6),
                     child: Text('INDICATORS',
                         style: TextStyle(
@@ -117,14 +117,14 @@ class _SearchPageState extends State<SearchPage> {
                               fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(e.source,
                           style:
-                              const TextStyle(fontSize: 11, color: kTextDim)),
+                              TextStyle(fontSize: 11, color: kTextDim)),
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => DatasetPage(entry: e))),
                     ),
                 ],
                 if (countries.isEmpty && datasets.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(
                         child: Text('Nothing found.',

@@ -115,7 +115,7 @@ class _ComparePageState extends State<ComparePage> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.bar_chart, color: kAmber, size: 20),
+                  Icon(Icons.bar_chart, color: kAmber, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -126,12 +126,12 @@ class _ComparePageState extends State<ComparePage> {
                                 fontSize: 15, fontWeight: FontWeight.w700)),
                         if (_indicator != null)
                           Text('${_indicator!.source} · ${_indicator!.unit}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: kTextDim)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.expand_more, color: kTextDim),
+                  Icon(Icons.expand_more, color: kTextDim),
                 ],
               ),
             ),
@@ -151,7 +151,7 @@ class _ComparePageState extends State<ComparePage> {
               if (_selected.length < _maxCountries &&
                   widget.allCountries.isNotEmpty)
                 ActionChip(
-                  avatar: const Icon(Icons.add, size: 16, color: kAmber),
+                  avatar: Icon(Icons.add, size: 16, color: kAmber),
                   label: const Text('Add country',
                       style: TextStyle(fontSize: 12)),
                   onPressed: _addCountry,
@@ -160,7 +160,7 @@ class _ComparePageState extends State<ComparePage> {
           ),
           const SizedBox(height: 20),
           if (_loading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(child: CircularProgressIndicator(color: kAmber)),
             )
@@ -253,6 +253,6 @@ class _Hint extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
             child: Text(text,
-                style: const TextStyle(color: kTextDim), textAlign: TextAlign.center)),
+                style: TextStyle(color: kTextDim), textAlign: TextAlign.center)),
       );
 }

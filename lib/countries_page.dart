@@ -47,11 +47,11 @@ class _CountriesPageState extends State<CountriesPage> {
         padding: const EdgeInsets.all(24),
         child: Text('Couldn\'t load countries.\n$_error',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: kTextDim)),
+            style: TextStyle(color: kTextDim)),
       ));
     }
     if (_countries == null) {
-      return const Center(child: CircularProgressIndicator(color: kAmber));
+      return Center(child: CircularProgressIndicator(color: kAmber));
     }
     final q = _query.toLowerCase();
     final shown = _countries!
@@ -64,7 +64,7 @@ class _CountriesPageState extends State<CountriesPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text('Countries', style: pageTitleStyle),
         ),
@@ -75,18 +75,18 @@ class _CountriesPageState extends State<CountriesPage> {
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search ${_countries!.length} countries…',
-              hintStyle: const TextStyle(color: kTextDim, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: kTextDim, size: 20),
+              hintStyle: TextStyle(color: kTextDim, fontSize: 14),
+              prefixIcon: Icon(Icons.search, color: kTextDim, size: 20),
               isDense: true,
               filled: true,
               fillColor: kBgCard,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: kBorder, width: 0.5),
+                borderSide: BorderSide(color: kBorder, width: 0.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: kBorder, width: 0.5),
+                borderSide: BorderSide(color: kBorder, width: 0.5),
               ),
             ),
           ),
@@ -100,8 +100,41 @@ class _CountriesPageState extends State<CountriesPage> {
             child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            itemCount: shown.length,
-            itemBuilder: (_, i) {
+            itemCount: shown.length + (q.isEmpty ? 1 : 0),
+            itemBuilder: (_, idx) {
+              // tappable world map on top — poke a country to open it
+              if (q.isEmpty && idx == 0) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Choropleth(
+                          values: const {},
+                          onTap: (iso, name) {
+                            final match = _countries!
+                                .where((c) => c.iso == iso)
+                                .toList();
+                            if (match.isNotEmpty) {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (_) => CountryPage(
+                                      country: match.first,
+                                      allCountries:
+                                          _countries ?? const [])));
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text('Tap a country on the map to open its profile',
+                          style: TextStyle(fontSize: 11, color: kTextDim)),
+                    ],
+                  ),
+                );
+              }
+              final i = idx - (q.isEmpty ? 1 : 0);
               final c = shown[i];
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 3),
@@ -113,9 +146,9 @@ class _CountriesPageState extends State<CountriesPage> {
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600)),
                   subtitle: Text('${c.region} · ${c.items.length} indicators',
-                      style: const TextStyle(fontSize: 12, color: kTextDim)),
+                      style: TextStyle(fontSize: 12, color: kTextDim)),
                   trailing:
-                      const Icon(Icons.chevron_right, color: kTextDim, size: 20),
+                      Icon(Icons.chevron_right, color: kTextDim, size: 20),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => CountryPage(
                           country: c, allCountries: _countries ?? const []))),
@@ -275,17 +308,17 @@ class _CountryPageState extends State<CountryPage> {
             Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.1)),
             const SizedBox(height: 2),
             Text(formatValue(it.value),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: kAmber,
                     height: 1.1)),
             Text('#${it.rank} of ${it.total}',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.2)),
           ],
         ),
@@ -343,7 +376,7 @@ class _CountryPageState extends State<CountryPage> {
         out.add(Padding(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
           child: Text(topicLabels[t] ?? t,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: kAmber,
@@ -360,7 +393,7 @@ class _CountryPageState extends State<CountryPage> {
               icon: Icon(expanded ? Icons.expand_less : Icons.expand_more,
                   size: 18, color: kAmber),
               label: Text(expanded ? 'Show less' : 'Show all ${rows.length}',
-                  style: const TextStyle(fontSize: 12, color: kAmber)),
+                  style: TextStyle(fontSize: 12, color: kAmber)),
             ),
           ));
         }
@@ -409,7 +442,7 @@ class _CountryPageState extends State<CountryPage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(country.official,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           color: kTextDim,
                           fontStyle: FontStyle.italic)),
@@ -432,7 +465,7 @@ class _CountryPageState extends State<CountryPage> {
               ),
               const SizedBox(height: 6),
               Text('${country.region} · ${country.items.length} indicators',
-                  style: const TextStyle(fontSize: 12, color: kTextDim)),
+                  style: TextStyle(fontSize: 12, color: kTextDim)),
             ],
           ),
         ),
@@ -451,7 +484,7 @@ class _CountryPageState extends State<CountryPage> {
         future: fetchDataset(item.slug),
         builder: (ctx, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const SizedBox(
+            return SizedBox(
                 height: 260,
                 child: Center(child: CircularProgressIndicator(color: kAmber)));
           }
@@ -469,10 +502,10 @@ class _CountryPageState extends State<CountryPage> {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700)),
                 Text('${widget.country.name} · ${item.unit}',
-                    style: const TextStyle(fontSize: 12, color: kTextDim)),
+                    style: TextStyle(fontSize: 12, color: kTextDim)),
                 const SizedBox(height: 16),
                 if (series.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                         child: Text('No time series available.',
@@ -485,7 +518,7 @@ class _CountryPageState extends State<CountryPage> {
                   ),
                 const SizedBox(height: 12),
                 Text('#${item.rank} of ${item.total} · latest ${item.period}',
-                    style: const TextStyle(fontSize: 12, color: kTextDim)),
+                    style: TextStyle(fontSize: 12, color: kTextDim)),
                 const SizedBox(height: 8),
               ],
             ),
@@ -597,7 +630,7 @@ class _CountryPageState extends State<CountryPage> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Text('Wikipedia',
+                        Text('Wikipedia',
                             style: TextStyle(fontSize: 10, color: kTextDim)),
                         const Spacer(),
                         Icon(
@@ -615,7 +648,7 @@ class _CountryPageState extends State<CountryPage> {
           ],
           ..._sections(rest),
           if (similar.isNotEmpty) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(0, 18, 0, 8),
               child: Text('More countries',
                   style: TextStyle(
@@ -672,7 +705,7 @@ class _IndicatorRow extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
                   Text('${item.period} · ${item.unit}',
-                      style: const TextStyle(fontSize: 11, color: kTextDim)),
+                      style: TextStyle(fontSize: 11, color: kTextDim)),
                 ],
               ),
             ),
@@ -693,7 +726,7 @@ class _IndicatorRow extends StatelessWidget {
                                 : kTextDim)),
               ],
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 6),
               child: Icon(Icons.show_chart, size: 16, color: kTextDim),
             ),
