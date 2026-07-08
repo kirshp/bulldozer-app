@@ -92,7 +92,12 @@ class _CountriesPageState extends State<CountriesPage> {
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: ListView.builder(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            color: kAmber,
+            backgroundColor: kBgCard,
+            child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             itemCount: shown.length,
             itemBuilder: (_, i) {
@@ -116,6 +121,7 @@ class _CountriesPageState extends State<CountriesPage> {
                 ),
               );
             },
+            ),
           ),
         ),
       ],

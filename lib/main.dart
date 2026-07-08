@@ -174,7 +174,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.8.0',
+                  applicationVersion: '1.9.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -283,10 +283,20 @@ class _HomePageState extends State<HomePage> {
         mode: LaunchMode.inAppBrowserView);
   }
 
+  /// Pull-to-refresh: re-fetch everything this screen shows (network-first,
+  /// so a pull picks up new stories/datasets published on the site).
+  Future<void> _refresh() =>
+      Future.wait([loadCatalog(), _loadFeatured(), _loadStories()]);
+
   @override
   Widget build(BuildContext context) {
     final topics = {for (final e in catalog) e.topic}.length;
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      color: kAmber,
+      backgroundColor: kBgCard,
+      child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         Row(
@@ -412,6 +422,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),
       ],
+      ),
     );
   }
 }

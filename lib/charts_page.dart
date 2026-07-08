@@ -181,7 +181,12 @@ class _ChartsPageState extends State<ChartsPage> {
                 _query.isEmpty &&
                 _topic == 'all';
             final headers = showFeatured ? 1 : 0;
-            return ListView.builder(
+            return RefreshIndicator(
+              onRefresh: () => Future.wait([loadCatalog(), _loadFeatured()]),
+              color: kAmber,
+              backgroundColor: kBgCard,
+              child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
               itemCount: shown.length + headers,
               itemBuilder: (_, idx) {
@@ -223,6 +228,7 @@ class _ChartsPageState extends State<ChartsPage> {
                 ),
               );
               },
+              ),
             );
           }),
         ),
@@ -294,7 +300,12 @@ class _DatasetPageState extends State<DatasetPage> {
         ? 1.0
         : rows.map((o) => o.value.abs()).reduce((a, b) => a > b ? a : b);
 
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: kAmber,
+      backgroundColor: kBgCard,
+      child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         Text(ds.summary,
@@ -370,6 +381,7 @@ class _DatasetPageState extends State<DatasetPage> {
             ),
         ],
       ],
+      ),
     );
   }
 
