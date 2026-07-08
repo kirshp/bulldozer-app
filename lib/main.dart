@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart';
+import 'edu_page.dart';
 import 'explore_page.dart';
 import 'flags.dart';
 import 'widgets/featured_card.dart';
@@ -70,7 +71,7 @@ class _HomeShellState extends State<HomeShell> {
                   kind: 'survey',
                   featuredSlug: 'afro-democracy-support'),
               const CountriesPage(),
-              const QuizPage(),
+              const EduPage(),
             ],
           ),
         ),
@@ -89,7 +90,7 @@ class _HomeShellState extends State<HomeShell> {
           NavigationDestination(
               icon: Icon(Icons.public_outlined), label: 'Geo'),
           NavigationDestination(
-              icon: Icon(Icons.extension_outlined), label: 'Quiz'),
+              icon: Icon(Icons.school_outlined), label: 'Edu'),
         ],
       ),
     );
@@ -123,7 +124,7 @@ class _HomeShellState extends State<HomeShell> {
                 context, Icons.business_center_outlined, 'Business & markets', 2),
             _menuItem(context, Icons.how_to_vote_outlined, 'Polls', 3),
             _menuItem(context, Icons.public_outlined, 'Countries', 4),
-            _menuItem(context, Icons.extension_outlined, 'Country Quiz', 5),
+            _menuItem(context, Icons.school_outlined, 'Edu', 5),
             const Divider(color: kBorder, height: 1),
             ListTile(
               leading: const Icon(Icons.scatter_plot_outlined,
@@ -137,8 +138,17 @@ class _HomeShellState extends State<HomeShell> {
                     builder: (_) => const ExplorePage()));
               },
             ),
-            _linkItem(context, Icons.school_outlined,
-                'Learn — data & BI tools', '/edu'),
+            ListTile(
+              leading:
+                  const Icon(Icons.extension_outlined, color: kAmber, size: 22),
+              title: const Text('Country Quiz',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600, color: kText)),
+              onTap: () {
+                Navigator.pop(context);
+                openQuiz(context);
+              },
+            ),
             _linkItem(context, Icons.menu_book_outlined,
                 'Glossary — metric reference', '/glossary'),
             _linkItem(
@@ -164,7 +174,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.4.0',
+                  applicationVersion: '1.8.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -213,6 +223,19 @@ class _HomeShellState extends State<HomeShell> {
       },
     );
   }
+}
+
+/// Opens the country quiz as its own screen (it used to be a tab, so it has
+/// no Scaffold of its own).
+void openQuiz(BuildContext context) {
+  Navigator.of(context).push(MaterialPageRoute(
+    builder: (_) => Scaffold(
+      appBar: AppBar(
+          title: const Text('Country Quiz',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
+      body: const SafeArea(child: QuizPage()),
+    ),
+  ));
 }
 
 class HomePage extends StatefulWidget {
@@ -308,6 +331,49 @@ class _HomePageState extends State<HomePage> {
           ],
           footer: 'Read the story →',
           onTap: () => _openStory('happiest-countries'),
+        ),
+        const SizedBox(height: 10),
+        // Country quiz entry — the quiz lives here now, not in the tab bar.
+        Card(
+          margin: EdgeInsets.zero,
+          child: InkWell(
+            onTap: () => openQuiz(context),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Text('🧩', style: TextStyle(fontSize: 26)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Country Quiz',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text('Guess the country from its data',
+                            style: TextStyle(fontSize: 12, color: kTextDim)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: kAmber,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text('Play',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: kBg)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         Row(

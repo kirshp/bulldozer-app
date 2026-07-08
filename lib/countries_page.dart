@@ -171,10 +171,54 @@ const _priority = <String, List<List<String>>>{
     ['gapminder-density'],
     ['unhcr-refugees'],
   ],
+  // Remaining topics: top-3 by prominence in the research literature.
+  'connectivity': [
+    ['gapminder-internet'],
+    ['wb-mobile-subscriptions'],
+    ['owid-electricity'],
+  ],
+  'health': [
+    ['gapminder-life-expectancy'],
+    ['owid-child-mortality', 'qog-wdi-mortinf'],
+    ['qog-wdi-chexppgdp'],
+    ['who-obesity'],
+    ['who-uhc'],
+  ],
+  'education': [
+    ['owid-schooling'], // HDI component
+    ['gapminder-literacy'],
+    ['pisa-mathematics', 'qog-wdi-expedu'],
+  ],
+  'environment': [
+    ['wb-en-ghg-co2-pc-ce-ar5'],
+    ['owid-renewables'],
+    ['gapminder-energy'],
+  ],
+  'governance': [
+    ['v-dem-v2x-polyarchy'], // V-Dem headline index
+    ['cpi-corruption-perceptions', 'qog-ti-cpi'],
+    ['v-dem-v2x-rule'],
+    ['v-dem-v2x-libdem'],
+    ['fiw-freedom-score', 'qog-fh-status'],
+  ],
+  'safety': [
+    ['gapminder-homicide'],
+    ['who-road-deaths'],
+  ],
+  'risk': [
+    ['inform-risk'],
+    ['wri-risk'],
+    ['wri-exposure'],
+  ],
+  'wellbeing': [
+    ['gapminder-hdi'],
+    ['whr-happiness'],
+  ],
 };
 
 class _CountryPageState extends State<CountryPage> {
   String? _wiki;
+  bool _wikiOpen = false; // Wikipedia blurb collapsed to a few lines
   CountryMeta? _meta; // capital / coat of arms / currency / ISO-2
   final Set<String> _expanded = {}; // 'kind:topic' groups shown in full
 
@@ -211,7 +255,7 @@ class _CountryPageState extends State<CountryPage> {
       borderRadius: BorderRadius.circular(10),
       onTap: () => _showIndicatorTrend(it),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
         decoration: BoxDecoration(
           color: kBgCard,
           borderRadius: BorderRadius.circular(10),
@@ -219,25 +263,23 @@ class _CountryPageState extends State<CountryPage> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(label,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 10, color: kTextDim, height: 1.15)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(formatValue(it.value),
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: kAmber)),
-                Text('#${it.rank} of ${it.total}',
-                    style: const TextStyle(fontSize: 10, color: kTextDim)),
-              ],
-            ),
+                    fontSize: 10, color: kTextDim, height: 1.1)),
+            const SizedBox(height: 2),
+            Text(formatValue(it.value),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: kAmber,
+                    height: 1.1)),
+            Text('#${it.rank} of ${it.total}',
+                style: const TextStyle(
+                    fontSize: 10, color: kTextDim, height: 1.2)),
           ],
         ),
       ),
@@ -508,28 +550,46 @@ class _CountryPageState extends State<CountryPage> {
               crossAxisCount: 3,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              childAspectRatio: 0.92,
+              childAspectRatio: 1.85, // compact: label + value + rank, no air
               children: [for (final h in headline) _kpiBadge(h.$1, h.$2)],
             ),
           ],
           if (_wiki != null) ...[
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: kBgCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kBorder, width: 0.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_wiki!,
-                      style: const TextStyle(fontSize: 13, height: 1.45)),
-                  const SizedBox(height: 6),
-                  const Text('Wikipedia',
-                      style: TextStyle(fontSize: 10, color: kTextDim)),
-                ],
+            // Collapsed to a few lines; the chevron reveals the full blurb.
+            InkWell(
+              onTap: () => setState(() => _wikiOpen = !_wikiOpen),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: kBgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kBorder, width: 0.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_wiki!,
+                        maxLines: _wikiOpen ? null : 4,
+                        overflow: _wikiOpen ? null : TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, height: 1.45)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Text('Wikipedia',
+                            style: TextStyle(fontSize: 10, color: kTextDim)),
+                        const Spacer(),
+                        Icon(
+                            _wikiOpen
+                                ? Icons.expand_less
+                                : Icons.expand_more,
+                            size: 18,
+                            color: kAmber),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
