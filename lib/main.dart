@@ -8,6 +8,7 @@ import 'edu_page.dart';
 import 'explore_page.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
+import 'notify.dart';
 import 'widgets/featured_card.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
@@ -18,6 +19,7 @@ void main() {
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
   loadFavorites(); // starred countries/indicators from disk
+  initNotify(); // local release reminders (Ativa-style, no push server)
 }
 
 class BulldozerApp extends StatelessWidget {
@@ -188,7 +190,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.11.0',
+                  applicationVersion: '1.12.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -263,6 +265,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Observation> _happyTop = [];
   List<Story> _stories = [];
+  List<Release> _releases = [];
   List<Country> _countries = []; // resolves starred ISOs to country objects
 
   @override
@@ -270,8 +273,41 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadFeatured();
     _loadStories();
+    _loadReleases();
     favoritesNotifier.addListener(_maybeLoadCountries);
     _maybeLoadCountries();
+  }
+
+  Future<void> _loadReleases() async {
+    try {
+      final r = await fetchReleases();
+      // soonest upcoming release month first
+      int dist(Release x) => x.months.isEmpty
+          ? 99
+          : x.months
+              .map((m) => (m - DateTime.now().month + 12) % 12)
+              .reduce((a, b) => a < b ? a : b);
+      r.sort((a, b) => dist(a).compareTo(dist(b)));
+      if (mounted) setState(() => _releases = r);
+    } catch (_) {
+      // calendar is best-effort
+    }
+  }
+
+  /// Bell tap: schedule or cancel a local reminder for this release.
+  Future<void> _toggleReminder(Release r) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (hasReminder(r.name)) {
+      await cancelReminder(r.name);
+      messenger.showSnackBar(
+          SnackBar(content: Text('Reminder off — ${r.name}')));
+    } else {
+      final ok = await setReminder(r.name, r.months);
+      messenger.showSnackBar(SnackBar(
+          content: Text(ok
+              ? 'Will remind when ${r.name} is due (${r.window})'
+              : 'Couldn\'t set a reminder — check notification permission')));
+    }
   }
 
   @override
@@ -321,7 +357,8 @@ class _HomePageState extends State<HomePage> {
   /// Pull-to-refresh: re-fetch everything this screen shows (network-first,
   /// so a pull picks up new stories/datasets published on the site).
   Future<void> _refresh() =>
-      Future.wait([loadCatalog(), _loadFeatured(), _loadStories()]);
+      Future.wait(
+          [loadCatalog(), _loadFeatured(), _loadStories(), _loadReleases()]);
 
   @override
   Widget build(BuildContext context) {
@@ -522,6 +559,52 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
+        // Upcoming data releases — bell schedules a local reminder (like
+        // Ativa's event reminders; no push server needed).
+        if (_releases.isNotEmpty) ...[
+          const SizedBox(height: 22),
+          const Row(
+            children: [
+              Text('📅 ', style: TextStyle(fontSize: 15)),
+              Text('Data releases',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text('Tap the bell to get a reminder when new data is due.',
+              style: TextStyle(fontSize: 12, color: kTextDim)),
+          const SizedBox(height: 8),
+          ValueListenableBuilder(
+            valueListenable: reminders,
+            builder: (_, rems, _) => Column(
+              children: [
+                for (final r in _releases.take(4))
+                  Card(
+                    margin: const EdgeInsets.symmetric(vertical: 3),
+                    child: ListTile(
+                      dense: true,
+                      title: Text(r.name,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text(
+                          '${r.window} · ${r.kind == 'survey' ? 'survey' : 'macro'}',
+                          style: const TextStyle(
+                              fontSize: 11, color: kTextDim)),
+                      trailing: IconButton(
+                        icon: Icon(
+                            rems.contains(r.name)
+                                ? Icons.notifications_active
+                                : Icons.notifications_none,
+                            color: rems.contains(r.name) ? kAmber : kTextDim,
+                            size: 22),
+                        onPressed: () => _toggleReminder(r),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 22),
         const Row(
           children: [

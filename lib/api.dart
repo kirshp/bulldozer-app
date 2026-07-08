@@ -204,6 +204,26 @@ Future<List<Story>> fetchStories() async => [
         Story.fromJson(s)
     ];
 
+class Release {
+  final String name;
+  final String window; // human-readable, e.g. "April & October"
+  final List<int> months; // typical release months (1–12)
+  final String kind;
+  final String url;
+
+  Release.fromJson(Map<String, dynamic> j)
+      : name = j['name'] ?? '',
+        window = j['window'] ?? '',
+        months = [for (final m in (j['months'] as List? ?? [])) m as int],
+        kind = j['kind'] ?? 'macro',
+        url = j['url'] ?? '';
+}
+
+Future<List<Release>> fetchReleases() async => [
+      for (final r in await fetchJson('/data/releases.json') as List)
+        Release.fromJson(r)
+    ];
+
 class QuizCountry {
   final String name;
   final String region;
