@@ -6,6 +6,7 @@ import 'catalog_store.dart';
 import 'charts_page.dart';
 import 'edu_page.dart';
 import 'explore_page.dart';
+import 'favorites_store.dart';
 import 'flags.dart';
 import 'widgets/featured_card.dart';
 import 'countries_page.dart';
@@ -15,6 +16,7 @@ import 'theme.dart';
 void main() {
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
+  loadFavorites(); // starred countries/indicators from disk
 }
 
 class BulldozerApp extends StatelessWidget {
@@ -174,7 +176,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.9.0',
+                  applicationVersion: '1.10.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -249,12 +251,33 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Observation> _happyTop = [];
   List<Story> _stories = [];
+  List<Country> _countries = []; // resolves starred ISOs to country objects
 
   @override
   void initState() {
     super.initState();
     _loadFeatured();
     _loadStories();
+    favoritesNotifier.addListener(_maybeLoadCountries);
+    _maybeLoadCountries();
+  }
+
+  @override
+  void dispose() {
+    favoritesNotifier.removeListener(_maybeLoadCountries);
+    super.dispose();
+  }
+
+  /// The country index is only needed to render starred-country chips —
+  /// fetch it lazily the first time a country is starred.
+  void _maybeLoadCountries() {
+    if (favoritesNotifier.value.countries.isEmpty || _countries.isNotEmpty) {
+      return;
+    }
+    fetchCountryIndex().then((list) {
+      list.sort((a, b) => a.name.compareTo(b.name));
+      if (mounted) setState(() => _countries = list);
+    }).catchError((_) {});
   }
 
   Future<void> _loadFeatured() async {
@@ -394,6 +417,75 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 8),
             const _StatBox(value: '190+', label: 'countries'),
           ],
+        ),
+        // Starred countries & indicators — shown once anything is starred.
+        ValueListenableBuilder(
+          valueListenable: favoritesNotifier,
+          builder: (_, favs, _) {
+            if (favs.countries.isEmpty && favs.datasets.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            final favCountries = [
+              for (final c in _countries)
+                if (favs.countries.contains(c.iso)) c
+            ];
+            final favDatasets = [
+              for (final slug in favs.datasets)
+                if (catalogBySlug[slug] != null) catalogBySlug[slug]!
+            ]..sort((a, b) => a.title.compareTo(b.title));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 22),
+                const Row(
+                  children: [
+                    Text('⭐ ', style: TextStyle(fontSize: 15)),
+                    Text('Favorites',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (favCountries.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final c in favCountries)
+                        ActionChip(
+                          label: Text('${flagFromIso(c.iso)} ${c.name}',
+                              style: const TextStyle(fontSize: 12)),
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => CountryPage(
+                                      country: c,
+                                      allCountries: _countries))),
+                        ),
+                    ],
+                  ),
+                if (favDatasets.isNotEmpty) ...[
+                  if (favCountries.isNotEmpty) const SizedBox(height: 8),
+                  for (final e in favDatasets)
+                    Card(
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      child: ListTile(
+                        dense: true,
+                        leading:
+                            const Icon(Icons.star, color: kAmber, size: 18),
+                        title: Text(e.title,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.chevron_right,
+                            color: kTextDim, size: 20),
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => DatasetPage(entry: e))),
+                      ),
+                    ),
+                ],
+              ],
+            );
+          },
         ),
         const SizedBox(height: 22),
         const Row(

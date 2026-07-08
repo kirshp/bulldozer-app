@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'charts_page.dart' show topicLabels, topicRank;
 import 'compare_page.dart';
+import 'favorites_store.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
@@ -522,6 +523,19 @@ class _CountryPageState extends State<CountryPage> {
         title: Text('${flagFromIso(country.iso)}  ${country.name}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         actions: [
+          // Star — pin this country to the Favorites block on Home.
+          ValueListenableBuilder(
+            valueListenable: favoritesNotifier,
+            builder: (_, favs, _) {
+              final fav = favs.countries.contains(country.iso);
+              return IconButton(
+                icon: Icon(fav ? Icons.star : Icons.star_border,
+                    color: fav ? kAmber : null),
+                tooltip: fav ? 'Remove from favorites' : 'Add to favorites',
+                onPressed: () => toggleFavCountry(country.iso),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.compare_arrows),
             tooltip: 'Compare',

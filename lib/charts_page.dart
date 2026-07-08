@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'catalog_store.dart';
+import 'favorites_store.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
@@ -276,6 +277,21 @@ class _DatasetPageState extends State<DatasetPage> {
       appBar: AppBar(
         title: Text(widget.entry.title,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        actions: [
+          // Star — pin this indicator to the Favorites block on Home.
+          ValueListenableBuilder(
+            valueListenable: favoritesNotifier,
+            builder: (_, favs, _) {
+              final fav = favs.datasets.contains(widget.entry.slug);
+              return IconButton(
+                icon: Icon(fav ? Icons.star : Icons.star_border,
+                    color: fav ? kAmber : null),
+                tooltip: fav ? 'Remove from favorites' : 'Add to favorites',
+                onPressed: () => toggleFavDataset(widget.entry.slug),
+              );
+            },
+          ),
+        ],
       ),
       body: _error != null
           ? Center(
