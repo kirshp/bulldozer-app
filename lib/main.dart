@@ -176,7 +176,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.10.0',
+                  applicationVersion: '1.10.1',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -366,44 +366,58 @@ class _HomePageState extends State<HomePage> {
           onTap: () => _openStory('happiest-countries'),
         ),
         const SizedBox(height: 10),
-        // Country quiz entry — the quiz lives here now, not in the tab bar.
-        Card(
-          margin: EdgeInsets.zero,
+        // Country quiz entry — a bright amber strip so it pops off the feed.
+        Material(
+          color: Colors.transparent,
           child: InkWell(
             onTap: () => openQuiz(context),
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  const Text('🧩', style: TextStyle(fontSize: 26)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Country Quiz',
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w700)),
-                        Text('Guess the country from its data',
-                            style: TextStyle(fontSize: 12, color: kTextDim)),
-                      ],
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [kAmber, kOrange],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    const Text('🧩', style: TextStyle(fontSize: 26)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Country Quiz',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: kBg)),
+                          Text('Guess the country from its data',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xB3000000))),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: kAmber,
-                      borderRadius: BorderRadius.circular(999),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: kBg,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text('Play',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: kAmber)),
                     ),
-                    child: const Text('Play',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: kBg)),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
