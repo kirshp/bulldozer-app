@@ -7,6 +7,7 @@ import 'favorites_store.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
+import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
 
 class CountriesPage extends StatefulWidget {
@@ -51,7 +52,7 @@ class _CountriesPageState extends State<CountriesPage> {
       ));
     }
     if (_countries == null) {
-      return Center(child: CircularProgressIndicator(color: kAmber));
+      return const SkeletonList(count: 10);
     }
     final q = _query.toLowerCase();
     final shown = _countries!

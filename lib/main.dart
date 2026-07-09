@@ -210,7 +210,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.14.0',
+                  applicationVersion: '1.15.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(

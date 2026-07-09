@@ -7,6 +7,7 @@ import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
+import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
@@ -354,8 +355,33 @@ class _DatasetPageState extends State<DatasetPage> {
                   style: TextStyle(color: kTextDim)),
             ))
           : _ds == null
-              ? Center(child: CircularProgressIndicator(color: kAmber))
+              ? _buildSkeleton()
               : _buildBody(),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Skeleton(width: double.infinity, height: 12),
+        const SizedBox(height: 8),
+        const Skeleton(width: 180, height: 10),
+        const SizedBox(height: 20),
+        for (var i = 0; i < 12; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                const Skeleton(width: 90, height: 12),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Skeleton(
+                        width: double.infinity, height: 10 + (i % 5) * 2)),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
