@@ -53,7 +53,7 @@ class ChoroLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lowC = isLight ? const Color(0xFFF3E3C0) : const Color(0xFF5C3D00);
+    final lowC = isLight ? const Color(0xFFF3E3C0) : const Color(0xFF7A5200);
     final midC = isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
     final highC = isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
     return Row(
@@ -228,12 +228,14 @@ class _MapPainter extends CustomPainter {
   final _noData = Paint()
     ..color = isLight ? const Color(0xFFDDD8CC) : const Color(0xFF2A2F36);
   final _border = Paint()
-    ..color = kBg
+    ..color = isLight
+        ? const Color(0x33000000) // dark hairline on the cream theme
+        : const Color(0x66FFFFFF) // light hairline separates every country
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 0.7;
+    ..strokeWidth = 0.8;
   // Three-stop ramp so mid values separate instead of blending into one
   // amber mass: dark → orange → bright (reversed lightness on light theme).
-  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF5C3D00);
+  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF7A5200);
   Color get _mid => isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
   Color get _high => isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
 
