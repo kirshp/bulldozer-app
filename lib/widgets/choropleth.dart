@@ -197,8 +197,16 @@ class _MapPainter extends CustomPainter {
   final _border = Paint()
     ..color = kBg
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 0.4;
-  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF3A2A00);
+    ..strokeWidth = 0.7;
+  // Three-stop ramp so mid values separate instead of blending into one
+  // amber mass: dark → orange → bright (reversed lightness on light theme).
+  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF241800);
+  Color get _mid => isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
+  Color get _high => isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
+
+  Color _ramp(double t) => t < 0.5
+      ? Color.lerp(_low, _mid, t * 2)!
+      : Color.lerp(_mid, _high, (t - 0.5) * 2)!;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -222,7 +230,7 @@ class _MapPainter extends CustomPainter {
         fill = _noData;
       } else {
         final t = maxV > minV ? (v - minV) / (maxV - minV) : 0.5;
-        fill = Paint()..color = Color.lerp(_low, kAmber, t.clamp(0.0, 1.0))!;
+        fill = Paint()..color = _ramp(t.clamp(0.0, 1.0));
       }
       canvas.drawPath(path, fill);
       canvas.drawPath(path, _border);
