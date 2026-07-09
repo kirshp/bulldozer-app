@@ -210,7 +210,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.13.6',
+                  applicationVersion: '1.14.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -296,7 +296,7 @@ class _HomePageState extends State<HomePage> {
     _loadStories();
     _loadReleases();
     favoritesNotifier.addListener(_maybeLoadCountries);
-    _maybeLoadCountries();
+    _loadCountries();
   }
 
   Future<void> _loadReleases() async {
@@ -337,16 +337,26 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  /// The country index is only needed to render starred-country chips —
-  /// fetch it lazily the first time a country is starred.
-  void _maybeLoadCountries() {
-    if (favoritesNotifier.value.countries.isEmpty || _countries.isNotEmpty) {
-      return;
-    }
+  /// Country index — powers the tappable happiness map, the favorites chips
+  /// and search. Loaded once on Home.
+  void _loadCountries() {
+    if (_countries.isNotEmpty) return;
     fetchCountryIndex().then((list) {
       list.sort((a, b) => a.name.compareTo(b.name));
       if (mounted) setState(() => _countries = list);
     }).catchError((_) {});
+  }
+
+  void _maybeLoadCountries() => _loadCountries();
+
+  /// Opens the tapped country's profile, jumped straight to its Wellbeing
+  /// group where the happiness score lives.
+  void _openCountry(String iso) {
+    final match = _countries.where((c) => c.iso == iso).toList();
+    if (match.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) =>
+            CountryPage(country: match.first, allCountries: _countries)));
   }
 
   Future<void> _loadFeatured() async {
@@ -462,10 +472,15 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Choropleth(values: _happyValues),
+                      child: Choropleth(
+                          values: _happyValues,
+                          onTap: (iso, _) => _openCountry(iso)),
                     ),
                     const SizedBox(height: 6),
                     const ChoroLegend(low: 'Less happy', high: 'Happier'),
+                    const SizedBox(height: 2),
+                    Text('Tap a country for its full profile',
+                        style: TextStyle(fontSize: 11, color: kTextDim)),
                   ],
                 ),
         ),
