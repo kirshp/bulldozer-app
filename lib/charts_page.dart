@@ -440,6 +440,8 @@ class _DatasetPageState extends State<DatasetPage> {
             ),
           ),
           const SizedBox(height: 8),
+          ChoroLegend(low: 'Low', high: 'High'),
+          const SizedBox(height: 6),
           Text('Tap a country for its trend · $_period · ${ds.unit}',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ] else ...[

@@ -45,6 +45,39 @@ Future<WorldGeo> loadWorldGeo() async {
       (j['w'] as num).toDouble(), (j['h'] as num).toDouble(), countries);
 }
 
+/// A small gradient legend for choropleth maps: low label — ramp — high label.
+class ChoroLegend extends StatelessWidget {
+  final String low;
+  final String high;
+  const ChoroLegend({super.key, required this.low, required this.high});
+
+  @override
+  Widget build(BuildContext context) {
+    final lowC = isLight ? const Color(0xFFF3E3C0) : const Color(0xFF5C3D00);
+    final midC = isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
+    final highC = isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
+    return Row(
+      children: [
+        Text(low, style: TextStyle(fontSize: 11, color: kTextDim)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              gradient: LinearGradient(colors: [lowC, midC, highC]),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(high,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, color: kAmber)),
+      ],
+    );
+  }
+}
+
 /// A labelled point in the map's geo space (pre-projected, like world.json) —
 /// used to mark a country's capital on the locator map.
 class CapitalMarker {
@@ -200,7 +233,7 @@ class _MapPainter extends CustomPainter {
     ..strokeWidth = 0.7;
   // Three-stop ramp so mid values separate instead of blending into one
   // amber mass: dark → orange → bright (reversed lightness on light theme).
-  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF241800);
+  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF5C3D00);
   Color get _mid => isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
   Color get _high => isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
 
@@ -215,9 +248,17 @@ class _MapPainter extends CustomPainter {
       for (final poly in c.polys) {
         for (final ring in poly) {
           if (ring.isEmpty) continue;
+          // Split rings that wrap the antimeridian (Russia, Fiji): a jump of
+          // half the map between neighbours would otherwise paint a streak
+          // right across the world.
           path.moveTo((ring[0].dx - rx0) * zs, (ring[0].dy - ry0) * zs);
           for (int i = 1; i < ring.length; i++) {
-            path.lineTo((ring[i].dx - rx0) * zs, (ring[i].dy - ry0) * zs);
+            if ((ring[i].dx - ring[i - 1].dx).abs() > geo.w / 2) {
+              path.close();
+              path.moveTo((ring[i].dx - rx0) * zs, (ring[i].dy - ry0) * zs);
+            } else {
+              path.lineTo((ring[i].dx - rx0) * zs, (ring[i].dy - ry0) * zs);
+            }
           }
           path.close();
         }

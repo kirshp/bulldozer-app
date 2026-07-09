@@ -210,7 +210,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.13.3',
+                  applicationVersion: '1.13.4',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -458,9 +458,15 @@ class _HomePageState extends State<HomePage> {
           onTap: () => _openStory('happiest-countries'),
           child: _happyValues.isEmpty
               ? null
-              : ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Choropleth(values: _happyValues),
+              : Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Choropleth(values: _happyValues),
+                    ),
+                    const SizedBox(height: 6),
+                    const ChoroLegend(low: 'Less happy', high: 'Happier'),
+                  ],
                 ),
         ),
         const SizedBox(height: 10),
