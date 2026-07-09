@@ -106,7 +106,7 @@ Future<bool> setReminder(String name, List<int> months) async {
   );
   await _plugin.zonedSchedule(
     id: _idFor(name),
-    title: 'BullDozer Stats',
+    title: 'BullDozer',
     body: 'Out this month: $name',
     scheduledDate: when,
     notificationDetails: details,

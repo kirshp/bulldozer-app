@@ -197,7 +197,7 @@ class _HomeShellState extends State<HomeShell> {
                 Navigator.pop(context);
                 launchUrl(
                     Uri.parse(
-                        'mailto:azenha.agent@gmail.com?subject=BullDozer%20Stats'),
+                        'mailto:azenha.agent@gmail.com?subject=BullDozer'),
                     mode: LaunchMode.externalApplication);
               },
             ),
@@ -209,8 +209,8 @@ class _HomeShellState extends State<HomeShell> {
                 Navigator.pop(context);
                 showAboutDialog(
                   context: context,
-                  applicationName: 'BullDozer Stats',
-                  applicationVersion: '1.13.0',
+                  applicationName: 'BullDozer',
+                  applicationVersion: '1.13.1',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
