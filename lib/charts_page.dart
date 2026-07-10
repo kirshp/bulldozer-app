@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'favorites_store.dart';
+import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
@@ -331,6 +332,11 @@ class _DatasetPageState extends State<DatasetPage> {
         title: Text(widget.entry.title,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'Share as image',
+            onPressed: _ds == null ? null : _share,
+          ),
           // Star — pin this indicator to the Favorites block on Home.
           ValueListenableBuilder(
             valueListenable: favoritesNotifier,
@@ -358,6 +364,26 @@ class _DatasetPageState extends State<DatasetPage> {
               ? _buildSkeleton()
               : _buildBody(),
     );
+  }
+
+  /// Opens the share-preview screen with a branded card of the current
+  /// ranking (top of the latest period).
+  void _share() {
+    final ds = _ds;
+    if (ds == null) return;
+    final rows = ds.data.where((o) => o.period == _period).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SharePreviewPage(
+        tag: ds.source,
+        title: ds.title,
+        bars: [
+          for (final o in rows.take(6))
+            ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+        ],
+        footer: '$_period · ${ds.unit}',
+      ),
+    ));
   }
 
   Widget _buildSkeleton() {
