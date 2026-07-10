@@ -512,6 +512,7 @@ class _DatasetPageState extends State<DatasetPage> {
                   style: TextStyle(color: kAmber)),
             ),
         ],
+        chartWatermark,
       ],
       ),
     );
@@ -545,6 +546,7 @@ class _DatasetPageState extends State<DatasetPage> {
             const SizedBox(height: 12),
             if (series.length >= 2)
               _TrendSummary(first: series.first, last: series.last),
+            chartWatermark,
             const SizedBox(height: 8),
           ],
         ),

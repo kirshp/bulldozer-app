@@ -138,3 +138,16 @@ Widget get brandTagline => Text.rich(
       ]),
       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
     );
+
+/// Subtle attribution line for chart views — sits under the caption so a
+/// screenshot carries the source without covering any data.
+Widget get chartWatermark => Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 2),
+      child: Text('shpara.com/bulldozer',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+              color: kAmber.withValues(alpha: 0.55))),
+    );
