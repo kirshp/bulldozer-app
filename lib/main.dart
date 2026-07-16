@@ -174,6 +174,8 @@ class _HomeShellState extends State<HomeShell> {
                 openQuiz(context);
               },
             ),
+            _linkItem(context, Icons.dashboard_outlined,
+                'Detailed dashboards', '/dashboards'),
             _linkItem(context, Icons.menu_book_outlined,
                 'Glossary — metric reference', '/glossary'),
             _linkItem(
