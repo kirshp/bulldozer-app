@@ -148,7 +148,8 @@ class _ChartsPageState extends State<ChartsPage> {
         footer: 'Every dot is a country · see them all →',
         onTap: onTap,
         child: DotStrip(items: [
-          for (final o in rows) ('${flagFromIso(o.iso)} ${o.entity}', o.value)
+          for (final o in rows)
+            ('${flagFromIso(o.iso)} ${o.entity}', o.value, o.group)
         ]),
       );
     }

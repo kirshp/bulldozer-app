@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'catalog_store.dart';
+import 'palette.dart';
 import 'theme.dart';
+import 'widgets/region_legend.dart';
 import 'widgets/search_sheet.dart';
 
 /// Explore — scatter one indicator against another across all countries.
@@ -60,17 +62,23 @@ class _ExplorePageState extends State<ExplorePage> {
     }
   }
 
-  /// Latest value + country name per ISO.
-  Map<String, ({double value, String name})> _latest(Dataset? ds) {
-    final m = <String, ({String period, double value, String name})>{};
+  /// Latest value + country name + region per ISO.
+  Map<String, ({double value, String name, String region})> _latest(
+      Dataset? ds) {
+    final m =
+        <String, ({String period, double value, String name, String region})>{};
     for (final o in ds?.data ?? const <Observation>[]) {
       if (o.iso.isEmpty) continue;
       final cur = m[o.iso];
       if (cur == null || o.period.compareTo(cur.period) > 0) {
-        m[o.iso] = (period: o.period, value: o.value, name: o.entity);
+        m[o.iso] =
+            (period: o.period, value: o.value, name: o.entity, region: o.group);
       }
     }
-    return {for (final e in m.entries) e.key: (value: e.value.value, name: e.value.name)};
+    return {
+      for (final e in m.entries)
+        e.key: (value: e.value.value, name: e.value.name, region: e.value.region)
+    };
   }
 
   void _pick(bool isX) {
@@ -91,11 +99,14 @@ class _ExplorePageState extends State<ExplorePage> {
   Widget build(BuildContext context) {
     final xv = _latest(_xDs);
     final yv = _latest(_yDs);
-    // (name, x, y) for countries present in both indicators.
-    final points = <(String, double, double)>[];
+    // (name, x, y, region) for countries present in both indicators.
+    final points = <(String, double, double, String)>[];
     for (final entry in xv.entries) {
       final y = yv[entry.key];
-      if (y != null) points.add((entry.value.name, entry.value.value, y.value));
+      if (y != null) {
+        points.add(
+            (entry.value.name, entry.value.value, y.value, entry.value.region));
+      }
     }
 
     return Scaffold(
@@ -127,6 +138,7 @@ class _ExplorePageState extends State<ExplorePage> {
               aspectRatio: 1,
               child: _scatter(points),
             ),
+            RegionLegend(regions: points.map((p) => p.$4)),
             const SizedBox(height: 10),
             Text(
                 '${points.length} countries · tap a dot for its name and values',
@@ -175,7 +187,7 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  Widget _scatter(List<(String, double, double)> points) {
+  Widget _scatter(List<(String, double, double, String)> points) {
     final xs = points.map((p) => p.$2).toList();
     final ys = points.map((p) => p.$3).toList();
     final minX = xs.reduce(min), maxX = xs.reduce(max);
@@ -195,7 +207,10 @@ class _ExplorePageState extends State<ExplorePage> {
               p.$2,
               p.$3,
               dotPainter: FlDotCirclePainter(
-                  radius: 4, color: kAmber.withValues(alpha: 0.85)),
+                  radius: 4.5,
+                  color: colorFor(p.$4).withValues(alpha: 0.82),
+                  strokeColor: kBg,
+                  strokeWidth: 0.6),
             ),
         ],
         gridData: FlGridData(
@@ -237,7 +252,7 @@ class _ExplorePageState extends State<ExplorePage> {
             getTooltipItems: (spot) {
               final match = points.firstWhere(
                   (p) => p.$2 == spot.x && p.$3 == spot.y,
-                  orElse: () => ('', spot.x, spot.y));
+                  orElse: () => ('', spot.x, spot.y, ''));
               return ScatterTooltipItem(
                 match.$1,
                 textStyle: TextStyle(

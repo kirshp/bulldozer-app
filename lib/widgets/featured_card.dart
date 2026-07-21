@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api.dart' show formatValue;
+import '../palette.dart';
 import '../theme.dart';
 
 /// The featured-hero container: amber-tinted gradient card with kicker tag,
@@ -67,7 +68,7 @@ class HeroShell extends StatelessWidget {
 /// A one-axis dot distribution: every country is a dot placed by value, the
 /// leader is highlighted and labelled. Distinct look for survey heroes.
 class DotStrip extends StatelessWidget {
-  final List<(String, double)> items; // (label, value), sorted desc
+  final List<(String, double, String)> items; // (label, value, region), desc
   const DotStrip({super.key, required this.items});
 
   @override
@@ -82,8 +83,8 @@ class DotStrip extends StatelessWidget {
           height: 56,
           width: double.infinity,
           child: CustomPaint(
-              painter:
-                  _DotStripPainter([for (final i in items) i.$2], kAmber)),
+              painter: _DotStripPainter(
+                  [for (final i in items) i.$2], [for (final i in items) i.$3])),
         ),
         const SizedBox(height: 6),
         Row(
@@ -103,8 +104,8 @@ class DotStrip extends StatelessWidget {
 
 class _DotStripPainter extends CustomPainter {
   final List<double> values;
-  final Color accent;
-  _DotStripPainter(this.values, this.accent);
+  final List<String> regions; // parallel to values — dot colour by region
+  _DotStripPainter(this.values, this.regions);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -119,26 +120,28 @@ class _DotStripPainter extends CustomPainter {
         Paint()
           ..color = kBorder
           ..strokeWidth = 1.5);
-    // jitter rows so dense clusters stay readable
+    // jitter rows so dense clusters stay readable; colour each dot by region
     for (var i = values.length - 1; i >= 0; i--) {
       final x = (values[i] - minV) / span * (size.width - 12) + 6;
       final dy = y - 8.0 * (i % 3);
+      final c = colorFor(i < regions.length ? regions[i] : null);
       canvas.drawCircle(Offset(x, dy), 4,
-          Paint()..color = accent.withValues(alpha: i == 0 ? 1 : 0.45));
+          Paint()..color = c.withValues(alpha: i == 0 ? 1 : 0.7));
     }
-    // leader ring
+    // leader ring (amber, brand accent)
     final xTop = (values.first - minV) / span * (size.width - 12) + 6;
     canvas.drawCircle(
         Offset(xTop, y),
         7,
         Paint()
-          ..color = accent
+          ..color = kAmber
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2);
   }
 
   @override
-  bool shouldRepaint(_DotStripPainter old) => old.values != values;
+  bool shouldRepaint(_DotStripPainter old) =>
+      old.values != values || old.regions != regions;
 }
 
 /// A rich featured block: amber-tinted gradient card with a kicker tag, title,
