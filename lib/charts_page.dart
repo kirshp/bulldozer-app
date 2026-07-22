@@ -107,12 +107,9 @@ class _ChartsPageState extends State<ChartsPage> {
   ];
 
   Future<void> _loadRecords() async {
-    // rotate: pick 3 different facts based on the day
-    final start = DateTime.now().day % _recordPool.length;
-    final picks = [
-      for (var i = 0; i < 3; i++)
-        _recordPool[(start + i * 3) % _recordPool.length]
-    ];
+    // shuffle the whole pool on every visit — 7 facts, fresh order each time
+    final picks = [..._recordPool]..shuffle();
+    picks.length = 7;
     final out = <RecordFact>[];
     for (final p in picks) {
       try {
@@ -362,7 +359,7 @@ class _ChartsPageState extends State<ChartsPage> {
             final topN = unfiltered ? widget.topCards.length : 0;
             final headers = topN + (showFeatured ? 1 : 0);
             return RefreshIndicator(
-              onRefresh: () => Future.wait([loadCatalog(), _loadFeatured()]),
+              onRefresh: () => Future.wait([loadCatalog(), _loadFeatured(), if (widget.featuredStyle == 'records') _loadRecords()]),
               color: kAmber,
               backgroundColor: kBgCard,
               child: ListView.builder(
