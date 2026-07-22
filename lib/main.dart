@@ -17,6 +17,7 @@ import 'widgets/featured_card.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
 import 'search_page.dart';
+import 'story_page.dart';
 import 'theme.dart';
 
 void main() {
@@ -244,7 +245,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.20.0',
+                  applicationVersion: '1.21.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -423,6 +424,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openStory(String slug) {
+    // Flagship data stories render natively; the rest open the web version.
+    final spec = nativeStories[slug];
+    if (spec != null) {
+      Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => StoryPage(spec: spec)));
+      return;
+    }
     launchUrl(Uri.parse('$kBaseUrl/stories/$slug'),
         mode: LaunchMode.inAppBrowserView);
   }
