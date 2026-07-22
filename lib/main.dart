@@ -15,6 +15,7 @@ import 'flags.dart';
 import 'notify.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
+import 'widgets/globe.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
 import 'search_page.dart';
@@ -247,7 +248,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.25.2',
+                  applicationVersion: '1.26.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -323,6 +324,7 @@ class _HomePageState extends State<HomePage> {
   List<Observation> _happyTop = [];
   Map<String, double> _happyValues = {}; // full map for the choropleth hero
   List<Story> _stories = [];
+  bool _globeHero = true; // 🌍 globe vs 🗺️ flat map on the Home hero
   List<Release> _releases = [];
   List<Country> _countries = []; // resolves starred ISOs to country objects
 
@@ -529,16 +531,51 @@ class _HomePageState extends State<HomePage> {
               ? null
               : Column(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Choropleth(
-                          values: _happyValues,
-                          onTap: (iso, _) => _openCountry(iso)),
+                    // 🌍 spinning globe by default; 🗺️ keeps the flat map —
+                    // both coloured by happiness, both tappable.
+                    Stack(
+                      children: [
+                        if (_globeHero)
+                          Globe(
+                              values: _happyValues,
+                              onTap: (iso, _) => _openCountry(iso))
+                        else
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Choropleth(
+                                values: _happyValues,
+                                onTap: (iso, _) => _openCountry(iso)),
+                          ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _globeHero = !_globeHero),
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: kBgCard.withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(999),
+                                border:
+                                    Border.all(color: kBorder, width: 0.5),
+                              ),
+                              child: Text(_globeHero ? '🗺️' : '🌍',
+                                  style: const TextStyle(fontSize: 15)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     const ChoroLegend(low: 'Less happy', high: 'Happier'),
                     const SizedBox(height: 2),
-                    Text('Tap a country for its full profile',
+                    Text(
+                        _globeHero
+                            ? 'Drag to spin · tap a country for its profile'
+                            : 'Tap a country for its full profile',
                         style: TextStyle(fontSize: 11, color: kTextDim)),
                   ],
                 ),
