@@ -7,6 +7,7 @@ import 'bubble_page.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart';
 import 'cities_page.dart';
+import 'cultural_map_page.dart';
 import 'edu_page.dart';
 import 'explore_page.dart';
 import 'favorites_store.dart';
@@ -106,7 +107,16 @@ class _HomeShellState extends State<HomeShell> {
                   title: 'Polls',
                   kind: 'survey',
                   featuredSlug: 'afro-democracy-support',
-                  featuredStyle: 'gauge'),
+                  featuredStyle: 'gauge',
+                  topCards: [
+                    _BizEntryCard(
+                      emoji: '🗺️',
+                      title: 'Map of values',
+                      subtitle: 'The Inglehart–Welzel cultural map (WVS)',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const CulturalMapPage())),
+                    ),
+                  ]),
               const CountriesPage(),
               const EduPage(),
             ],
@@ -246,7 +256,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.22.0',
+                  applicationVersion: '1.23.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -426,6 +436,11 @@ class _HomePageState extends State<HomePage> {
 
   void _openStory(String slug) {
     // Flagship data stories render natively; the rest open the web version.
+    if (slug == 'cultural-map') {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const CulturalMapPage()));
+      return;
+    }
     final spec = nativeStories[slug];
     if (spec != null) {
       Navigator.of(context).push(
