@@ -182,6 +182,7 @@ const _headline = <(String, List<String>)>[
   ('Unemployment', ['imf-unemployment']),
   ('Life expectancy', ['gapminder-life-expectancy']),
   ('Population', ['imf-population', 'gapminder-population']),
+  ('Happiness', ['whr-happiness']),
 ];
 
 const _sectionMeta = [('macro', '📊 Statistics'), ('survey', '🗣️ Surveys')];

@@ -256,7 +256,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.23.0',
+                  applicationVersion: '1.23.1',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -397,9 +397,19 @@ class _HomePageState extends State<HomePage> {
 
   /// Opens the tapped country's profile, jumped straight to its Wellbeing
   /// group where the happiness score lives.
-  void _openCountry(String iso) {
+  void _openCountry(String iso) async {
+    // country index loads lazily — fetch on demand so the map tap always works
+    if (_countries.isEmpty) {
+      try {
+        final list = await fetchCountryIndex();
+        list.sort((a, b) => a.name.compareTo(b.name));
+        if (mounted) setState(() => _countries = list);
+      } catch (_) {
+        return;
+      }
+    }
     final match = _countries.where((c) => c.iso == iso).toList();
-    if (match.isEmpty) return;
+    if (match.isEmpty || !mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
         builder: (_) =>
             CountryPage(country: match.first, allCountries: _countries)));
