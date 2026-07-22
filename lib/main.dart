@@ -107,16 +107,7 @@ class _HomeShellState extends State<HomeShell> {
                   title: 'Polls',
                   kind: 'survey',
                   featuredSlug: 'afro-democracy-support',
-                  featuredStyle: 'gauge',
-                  topCards: [
-                    _BizEntryCard(
-                      emoji: '🗺️',
-                      title: 'Map of values',
-                      subtitle: 'The Inglehart–Welzel cultural map (WVS)',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const CulturalMapPage())),
-                    ),
-                  ]),
+                  featuredStyle: 'cultural'),
               const CountriesPage(),
               const EduPage(),
             ],
@@ -256,7 +247,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.23.1',
+                  applicationVersion: '1.24.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(

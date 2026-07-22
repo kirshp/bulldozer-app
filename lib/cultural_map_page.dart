@@ -317,3 +317,59 @@ class _CulturalPainter extends CustomPainter {
   bool shouldRepaint(_CulturalPainter old) =>
       old.pts != pts || old.sel != sel;
 }
+
+/// Compact, non-interactive cultural map for the Polls hero — same dots and
+/// zone colours, no labels except a handful of anchors; tap opens the page.
+class MiniCulturalMap extends StatefulWidget {
+  const MiniCulturalMap({super.key});
+  @override
+  State<MiniCulturalMap> createState() => _MiniCulturalMapState();
+}
+
+class _MiniCulturalMapState extends State<MiniCulturalMap> {
+  List<_CPt>? _pts;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await Future.wait(
+          [fetchDataset('wvs-emancipative'), fetchDataset('wvs-secular')]);
+      Map<String, Observation> latest(Dataset d) {
+        final m = <String, Observation>{};
+        for (final o in d.data) {
+          if (o.iso.isEmpty) continue;
+          final cur = m[o.iso];
+          if (cur == null || o.period.compareTo(cur.period) > 0) m[o.iso] = o;
+        }
+        return m;
+      }
+
+      final e = latest(res[0]), s = latest(res[1]);
+      final pts = <_CPt>[];
+      for (final iso in e.keys) {
+        final so = s[iso];
+        if (so == null) continue;
+        pts.add(_CPt(iso, e[iso]!.entity, _zone[iso] ?? 'was', e[iso]!.value,
+            so.value));
+      }
+      if (mounted) setState(() => _pts = pts);
+    } catch (_) {
+      // hero is decorative
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_pts == null) return const SizedBox(height: 170);
+    return SizedBox(
+      height: 170,
+      width: double.infinity,
+      child: CustomPaint(painter: _CulturalPainter(_pts!, null)),
+    );
+  }
+}

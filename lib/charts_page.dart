@@ -9,6 +9,7 @@ import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
 import 'brands_page.dart';
+import 'cultural_map_page.dart';
 import 'widgets/freshness.dart';
 import 'widgets/hero_extras.dart';
 import 'widgets/skeleton.dart';
@@ -135,6 +136,16 @@ class _ChartsPageState extends State<ChartsPage> {
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const BrandsPage())),
         child: BrandPodium(top3: _brands),
+      );
+    }
+    if (widget.featuredStyle == 'cultural') {
+      return HeroShell(
+        tag: 'World Values Survey',
+        title: 'The Inglehart–Welzel map of values',
+        footer: 'Explore the map — tap any country →',
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CulturalMapPage())),
+        child: const MiniCulturalMap(),
       );
     }
     if (widget.featuredStyle == 'gauge' && _featDs != null) {
