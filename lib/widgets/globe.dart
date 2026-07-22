@@ -51,7 +51,7 @@ class _GlobeState extends State<Globe> with SingleTickerProviderStateMixin {
   List<_GlobeCountry>? _geo;
   late final AnimationController _spin;
   double _lon = 0.35; // rotation (radians); drag adjusts it
-  double _lat = -0.45; // view latitude (tilt), drag adjusts, clamped
+  double _lat = 0.4; // view latitude — north hemisphere in view
   DateTime _lastDrag = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
@@ -65,7 +65,7 @@ class _GlobeState extends State<Globe> with SingleTickerProviderStateMixin {
       ..addListener(() {
         // gentle auto-spin, paused for a few seconds after a drag
         if (DateTime.now().difference(_lastDrag).inSeconds >= 3) {
-          setState(() => _lon += 0.0035);
+          setState(() => _lon += 0.0012);
         }
       })
       ..repeat();

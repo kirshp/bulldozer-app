@@ -248,7 +248,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.26.0',
+                  applicationVersion: '1.26.1',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -390,6 +390,26 @@ class _HomePageState extends State<HomePage> {
 
   /// Opens the tapped country's profile, jumped straight to its Wellbeing
   /// group where the happiness score lives.
+  Widget _heroToggle(String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? kAmber : kBgCard,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? kAmber : kBorder, width: 0.5),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: selected ? kBg : kText)),
+      ),
+    );
+  }
+
   void _openCountry(String iso) async {
     // country index loads lazily — fetch on demand so the map tap always works
     if (_countries.isEmpty) {
@@ -533,42 +553,28 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     // 🌍 spinning globe by default; 🗺️ keeps the flat map —
                     // both coloured by happiness, both tappable.
-                    Stack(
+                    // explicit globe/map pills — same pattern as Bars/Map
+                    Row(
                       children: [
-                        if (_globeHero)
-                          Globe(
-                              values: _happyValues,
-                              onTap: (iso, _) => _openCountry(iso))
-                        else
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Choropleth(
-                                values: _happyValues,
-                                onTap: (iso, _) => _openCountry(iso)),
-                          ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: InkWell(
-                            onTap: () =>
-                                setState(() => _globeHero = !_globeHero),
-                            borderRadius: BorderRadius.circular(999),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: kBgCard.withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(999),
-                                border:
-                                    Border.all(color: kBorder, width: 0.5),
-                              ),
-                              child: Text(_globeHero ? '🗺️' : '🌍',
-                                  style: const TextStyle(fontSize: 15)),
-                            ),
-                          ),
-                        ),
+                        _heroToggle('🌍 Globe', _globeHero,
+                            () => setState(() => _globeHero = true)),
+                        const SizedBox(width: 8),
+                        _heroToggle('🗺️ Map', !_globeHero,
+                            () => setState(() => _globeHero = false)),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    if (_globeHero)
+                      Globe(
+                          values: _happyValues,
+                          onTap: (iso, _) => _openCountry(iso))
+                    else
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Choropleth(
+                            values: _happyValues,
+                            onTap: (iso, _) => _openCountry(iso)),
+                      ),
                     const SizedBox(height: 6),
                     const ChoroLegend(low: 'Less happy', high: 'Happier'),
                     const SizedBox(height: 2),
