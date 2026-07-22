@@ -84,6 +84,7 @@ class _HomeShellState extends State<HomeShell> {
                   title: 'Business & markets',
                   slugs: bizSlugs,
                   featuredSlug: 'wb-market-cap',
+                  featuredStyle: 'podium',
                   topCards: [
                     _BizEntryCard(
                       emoji: '🏆',
@@ -105,7 +106,7 @@ class _HomeShellState extends State<HomeShell> {
                   title: 'Polls',
                   kind: 'survey',
                   featuredSlug: 'afro-democracy-support',
-                  featuredStyle: 'dots'),
+                  featuredStyle: 'gauge'),
               const CountriesPage(),
               const EduPage(),
             ],
@@ -245,7 +246,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.21.0',
+                  applicationVersion: '1.22.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(

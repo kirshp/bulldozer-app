@@ -8,7 +8,9 @@ import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
+import 'brands_page.dart';
 import 'widgets/freshness.dart';
+import 'widgets/hero_extras.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
 
@@ -87,11 +89,18 @@ class _ChartsPageState extends State<ChartsPage> {
   String _topic = 'all';
   List<Observation> _featTop = [];
   Dataset? _featDs; // full dataset, for the trend/dots hero styles
+  List<Brand> _brands = []; // top brands, for the Biz podium hero
 
   @override
   void initState() {
     super.initState();
     _loadFeatured();
+    if (widget.featuredStyle == 'podium') {
+      fetchBrands().then((b) {
+        b.sort((x, y) => x.rank.compareTo(y.rank));
+        if (mounted) setState(() => _brands = b.take(3).toList());
+      }).catchError((_) {});
+    }
   }
 
   Future<void> _loadFeatured() async {
@@ -113,11 +122,37 @@ class _ChartsPageState extends State<ChartsPage> {
     }
   }
 
-  /// Distinct hero per tab: Biz keeps ranked bars, Stats gets the world
-  /// trend line, Polls a dot distribution — no more identical "mattresses".
+  /// Distinct hero per tab: Stats a world trend line, Biz a brand podium,
+  /// Polls a world-average gauge — no more identical "mattresses".
   Widget _buildHero(CatalogEntry featEntry) {
     void onTap() => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => DatasetPage(entry: featEntry)));
+    if (widget.featuredStyle == 'podium' && _brands.length >= 3) {
+      return HeroShell(
+        tag: 'Most valuable brands',
+        title: '${_brands.first.name} — the world’s top brand',
+        footer: 'All 96 brands with logos →',
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const BrandsPage())),
+        child: BrandPodium(top3: _brands),
+      );
+    }
+    if (widget.featuredStyle == 'gauge' && _featDs != null) {
+      final last = _featDs!.periods.last;
+      final rows = _featDs!.data.where((o) => o.period == last).toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      if (rows.length >= 2) {
+        final avg =
+            rows.map((o) => o.value).reduce((a, b) => a + b) / rows.length;
+        return HeroShell(
+          tag: 'Featured · ${featEntry.source}',
+          title: featEntry.title,
+          footer: 'See every country →',
+          onTap: onTap,
+          child: GaugeHero(avg: avg, top: rows.first, low: rows.last),
+        );
+      }
+    }
     if (widget.featuredStyle == 'trend' && _featDs != null) {
       // world average per period — a line that actually moves
       final byPeriod = <String, List<double>>{};
