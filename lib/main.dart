@@ -19,6 +19,7 @@ import 'theme.dart';
 void main() {
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
+  loadManifest(); // freshness + resource counts from the site's discovery doc
   loadFavorites(); // starred countries/indicators from disk
   initNotify(); // local release reminders (Ativa-style, no push server)
   loadTheme(); // light/dark preference from disk
@@ -212,7 +213,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.18.0',
+                  applicationVersion: '1.19.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -690,9 +691,21 @@ class _HomePageState extends State<HomePage> {
           for (final s in _stories.where((s) => s.slug != 'happiest-countries'))
             _StoryCard(story: s, onTap: () => _openStory(s.slug)),
         const SizedBox(height: 16),
-        Center(
-          child: Text('Open data · full site at shpara.com/bulldozer',
-              style: TextStyle(fontSize: 11, color: kTextDim)),
+        // Live freshness from the site manifest — proves the data is current.
+        ValueListenableBuilder(
+          valueListenable: manifestNotifier,
+          builder: (_, m, _) {
+            final fresh = m?.freshestParse ?? '';
+            return Center(
+              child: Text(
+                fresh.isEmpty
+                    ? 'Open data · full site at shpara.com/bulldozer'
+                    : 'Data updated $fresh · open data · shpara.com/bulldozer',
+                style: TextStyle(fontSize: 11, color: kTextDim),
+                textAlign: TextAlign.center,
+              ),
+            );
+          },
         ),
       ],
       ),

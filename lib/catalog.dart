@@ -10,7 +10,11 @@ class CatalogEntry {
   final String kind; // 'survey' | 'macro'
   final String topic;
   final String source;
-  const CatalogEntry(this.slug, this.title, this.unit, this.kind, this.topic, this.source);
+  final String parsedAt; // ISO date the dataset was last refreshed (freshness)
+  final String latest; // latest data period present, e.g. "2024"
+  const CatalogEntry(this.slug, this.title, this.unit, this.kind, this.topic,
+      this.source,
+      [this.parsedAt = '', this.latest = '']);
 }
 
 const List<CatalogEntry> bakedCatalog = [

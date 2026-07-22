@@ -8,6 +8,7 @@ import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
+import 'widgets/freshness.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
 
@@ -276,8 +277,15 @@ class _ChartsPageState extends State<ChartsPage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  trailing:
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FreshnessBadge(
+                          parsedAt: e.parsedAt, latest: e.latest, compact: true),
+                      const SizedBox(width: 8),
                       Icon(Icons.chevron_right, color: kTextDim, size: 20),
+                    ],
+                  ),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => DatasetPage(entry: e))),
                 ),
@@ -435,6 +443,14 @@ class _DatasetPageState extends State<DatasetPage> {
         const SizedBox(height: 6),
         Text('${ds.source} · ${ds.license} · ${ds.unit}',
             style: TextStyle(fontSize: 11, color: kTextDim)),
+        if (widget.entry.parsedAt.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FreshnessBadge(
+                parsedAt: widget.entry.parsedAt, latest: widget.entry.latest),
+          ),
+        ],
         const SizedBox(height: 12),
         Wrap(
           spacing: 6,
