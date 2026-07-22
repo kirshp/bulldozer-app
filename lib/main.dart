@@ -79,7 +79,7 @@ class _HomeShellState extends State<HomeShell> {
                   title: 'Statistics',
                   kind: 'macro',
                   featuredSlug: 'gapminder-life-expectancy',
-                  featuredStyle: 'trend'),
+                  featuredStyle: 'records'),
               ChartsPage(
                   key: ValueKey('biz${catalog.length}'),
                   title: 'Business & markets',
@@ -247,7 +247,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.24.0',
+                  applicationVersion: '1.25.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(

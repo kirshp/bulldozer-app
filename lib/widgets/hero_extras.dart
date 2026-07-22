@@ -195,3 +195,69 @@ class _GaugePainter extends CustomPainter {
   @override
   bool shouldRepaint(_GaugePainter old) => old.t != t;
 }
+
+/// Stats hero: "world records" — three tappable fact rows, each the extreme
+/// of a different indicator (longest life, fastest growth, most people…).
+/// The pool rotates per app launch, so the hero reads fresh every time.
+class RecordsHero extends StatelessWidget {
+  final List<RecordFact> facts;
+  final void Function(RecordFact) onTapFact;
+  const RecordsHero({super.key, required this.facts, required this.onTapFact});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final f in facts) ...[
+          InkWell(
+            onTap: () => onTapFact(f),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
+              child: Row(
+                children: [
+                  Text(f.emoji, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${flagFromIso(f.iso)} ${f.country}',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w800)),
+                        Text(f.caption,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                TextStyle(fontSize: 11, color: kTextDim)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(f.value,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: kAmber)),
+                ],
+              ),
+            ),
+          ),
+          if (f != facts.last)
+            Divider(color: kBorder, height: 1, thickness: 0.5),
+        ],
+      ],
+    );
+  }
+}
+
+class RecordFact {
+  final String emoji, country, iso, caption, value, slug;
+  const RecordFact(
+      {required this.emoji,
+      required this.country,
+      required this.iso,
+      required this.caption,
+      required this.value,
+      required this.slug});
+}

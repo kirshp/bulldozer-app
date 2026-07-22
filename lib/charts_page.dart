@@ -91,11 +91,57 @@ class _ChartsPageState extends State<ChartsPage> {
   List<Observation> _featTop = [];
   Dataset? _featDs; // full dataset, for the trend/dots hero styles
   List<Brand> _brands = []; // top brands, for the Biz podium hero
+  List<RecordFact> _records = []; // world-records facts, for the Stats hero
+
+  // Rotating pool for the records hero: emoji, caption, slug, best=max|min.
+  static const _recordPool = <(String, String, String, bool)>[
+    ('👴', 'longest life expectancy', 'gapminder-life-expectancy', true),
+    ('👥', 'most people', 'gapminder-population', true),
+    ('📈', 'fastest GDP growth', 'imf-gdp-growth', true),
+    ('💰', 'richest per capita (PPP)', 'imf-gdp-per-capita-ppp', true),
+    ('🌐', 'most internet users', 'gapminder-internet', true),
+    ('🏭', 'highest CO₂ per capita', 'wb-en-ghg-co2-pc-ce-ar5', true),
+    ('🎓', 'most years of schooling', 'owid-schooling', true),
+    ('🔥', 'highest inflation', 'imf-inflation', true),
+    ('🕊️', 'lowest homicide rate', 'gapminder-homicide', false),
+  ];
+
+  Future<void> _loadRecords() async {
+    // rotate: pick 3 different facts based on the day
+    final start = DateTime.now().day % _recordPool.length;
+    final picks = [
+      for (var i = 0; i < 3; i++)
+        _recordPool[(start + i * 3) % _recordPool.length]
+    ];
+    final out = <RecordFact>[];
+    for (final p in picks) {
+      try {
+        final ds = await fetchDataset(p.$3);
+        final last = ds.periods.last;
+        final rows = ds.data
+            .where((o) => o.period == last && o.iso.isNotEmpty)
+            .toList()
+          ..sort((a, b) =>
+              p.$4 ? b.value.compareTo(a.value) : a.value.compareTo(b.value));
+        if (rows.isEmpty) continue;
+        final o = rows.first;
+        out.add(RecordFact(
+            emoji: p.$1,
+            country: o.entity,
+            iso: o.iso,
+            caption: p.$2,
+            value: formatValue(o.value),
+            slug: p.$3));
+      } catch (_) {}
+    }
+    if (mounted && out.isNotEmpty) setState(() => _records = out);
+  }
 
   @override
   void initState() {
     super.initState();
     _loadFeatured();
+    if (widget.featuredStyle == 'records') _loadRecords();
     if (widget.featuredStyle == 'podium') {
       fetchBrands().then((b) {
         b.sort((x, y) => x.rank.compareTo(y.rank));
@@ -136,6 +182,24 @@ class _ChartsPageState extends State<ChartsPage> {
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const BrandsPage())),
         child: BrandPodium(top3: _brands),
+      );
+    }
+    if (widget.featuredStyle == 'records' && _records.isNotEmpty) {
+      return HeroShell(
+        tag: 'World records',
+        title: 'The world in superlatives',
+        footer: 'Tap a record for the full ranking →',
+        onTap: onTap,
+        child: RecordsHero(
+          facts: _records,
+          onTapFact: (f) {
+            final e = catalogBySlug[f.slug];
+            if (e != null) {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => DatasetPage(entry: e)));
+            }
+          },
+        ),
       );
     }
     if (widget.featuredStyle == 'cultural') {
