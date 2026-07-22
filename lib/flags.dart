@@ -54,3 +54,10 @@ String flagFromIso(String iso3) {
   if (a2 == null) return '🌍';
   return String.fromCharCodes(a2.codeUnits.map((c) => 0x1F1E6 + c - 65));
 }
+
+/// Flag emoji directly from an ISO alpha-2 code (e.g. "DK"); '' → 🌍.
+String flagFromIso2(String iso2) {
+  if (iso2.length != 2) return '🌍';
+  final up = iso2.toUpperCase();
+  return String.fromCharCodes(up.codeUnits.map((c) => 0x1F1E6 + c - 65));
+}

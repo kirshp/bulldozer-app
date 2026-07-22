@@ -224,6 +224,75 @@ Future<List<Release>> fetchReleases() async => [
         Release.fromJson(r)
     ];
 
+/// A most-valuable brand (BrandZ/Forbes aggregate) — for the Biz section.
+class Brand {
+  final int rank;
+  final String name;
+  final double valueBn;
+  final int year;
+  final String iso;
+  final String logo; // Commons SVG; append ?width=N for a PNG render
+  final String desc;
+  final String wiki;
+
+  Brand.fromJson(Map<String, dynamic> j)
+      : rank = (j['rank'] as num?)?.toInt() ?? 0,
+        name = j['name'] ?? '',
+        valueBn = (j['valueBn'] as num?)?.toDouble() ?? 0,
+        year = (j['year'] as num?)?.toInt() ?? 0,
+        iso = j['iso'] ?? '',
+        logo = j['logo'] ?? '',
+        desc = j['desc'] ?? '',
+        wiki = j['wiki'] ?? '';
+
+  /// A PNG render of the (usually SVG) logo at [w] px — Commons Special:FilePath.
+  String logoUrl(int w) => logo.isEmpty ? '' : '$logo?width=$w';
+}
+
+Future<List<Brand>> fetchBrands() async => [
+      for (final b in await fetchJson('/data/brands.json') as List)
+        Brand.fromJson(b)
+    ];
+
+/// One city in a livability metric.
+class City {
+  final String city, country, cc;
+  final double value;
+  City.fromJson(Map<String, dynamic> j)
+      : city = j['city'] ?? '',
+        country = j['country'] ?? '',
+        cc = j['cc'] ?? '',
+        value = (j['value'] as num?)?.toDouble() ?? 0;
+}
+
+/// A city-livability metric (one dimension) with its ranked cities.
+class CityMetric {
+  final String key, label, unit, summary;
+  final List<City> data;
+  CityMetric.fromJson(Map<String, dynamic> j)
+      : key = j['key'] ?? '',
+        label = j['label'] ?? '',
+        unit = j['unit'] ?? '',
+        summary = j['summary'] ?? '',
+        data = [for (final c in (j['data'] as List? ?? [])) City.fromJson(c)];
+}
+
+/// Cities dataset: title/source + a list of metrics (dimensions).
+class CitiesData {
+  final String title, source;
+  final List<CityMetric> metrics;
+  CitiesData.fromJson(Map<String, dynamic> j)
+      : title = j['title'] ?? '',
+        source = j['source'] ?? '',
+        metrics = [
+          for (final m in (j['metrics'] as List? ?? []))
+            CityMetric.fromJson(m)
+        ];
+}
+
+Future<CitiesData> fetchCities() async =>
+    CitiesData.fromJson(await fetchJson('/data/cities.json') as Map<String, dynamic>);
+
 class QuizCountry {
   final String name;
   final String region;

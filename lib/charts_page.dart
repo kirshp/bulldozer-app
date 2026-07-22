@@ -68,13 +68,15 @@ class ChartsPage extends StatefulWidget {
   final List<String>? slugs; // curated set, overrides kind (Biz)
   final String? featuredSlug; // dataset shown as a featured hero on top
   final String featuredStyle; // 'bars' | 'trend' | 'dots' — distinct per tab
+  final List<Widget> topCards; // entry cards above the list (e.g. Biz brands)
   const ChartsPage(
       {super.key,
       required this.title,
       this.kind,
       this.slugs,
       this.featuredSlug,
-      this.featuredStyle = 'bars'});
+      this.featuredStyle = 'bars',
+      this.topCards = const []});
 
   @override
   State<ChartsPage> createState() => _ChartsPageState();
@@ -243,11 +245,12 @@ class _ChartsPageState extends State<ChartsPage> {
             final featEntry = widget.featuredSlug != null
                 ? catalogBySlug[widget.featuredSlug]
                 : null;
-            final showFeatured = featEntry != null &&
-                _featTop.isNotEmpty &&
-                _query.isEmpty &&
-                _topic == 'all';
-            final headers = showFeatured ? 1 : 0;
+            final unfiltered = _query.isEmpty && _topic == 'all';
+            final showFeatured =
+                featEntry != null && _featTop.isNotEmpty && unfiltered;
+            // entry cards (Brands/Cities on Biz) only in the unfiltered view
+            final topN = unfiltered ? widget.topCards.length : 0;
+            final headers = topN + (showFeatured ? 1 : 0);
             return RefreshIndicator(
               onRefresh: () => Future.wait([loadCatalog(), _loadFeatured()]),
               color: kAmber,
@@ -257,7 +260,13 @@ class _ChartsPageState extends State<ChartsPage> {
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
               itemCount: shown.length + headers,
               itemBuilder: (_, idx) {
-                if (showFeatured && idx == 0) {
+                if (idx < topN) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+                    child: widget.topCards[idx],
+                  );
+                }
+                if (showFeatured && idx == topN) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
                     child: _buildHero(featEntry),

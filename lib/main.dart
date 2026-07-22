@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
+import 'brands_page.dart';
+import 'bubble_page.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart';
+import 'cities_page.dart';
 import 'edu_page.dart';
 import 'explore_page.dart';
 import 'favorites_store.dart';
@@ -79,7 +82,23 @@ class _HomeShellState extends State<HomeShell> {
                   key: ValueKey('biz${catalog.length}'),
                   title: 'Business & markets',
                   slugs: bizSlugs,
-                  featuredSlug: 'wb-market-cap'),
+                  featuredSlug: 'wb-market-cap',
+                  topCards: [
+                    _BizEntryCard(
+                      emoji: '🏆',
+                      title: 'Top brands',
+                      subtitle: 'Most valuable global brands, with logos',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const BrandsPage())),
+                    ),
+                    _BizEntryCard(
+                      emoji: '🏙️',
+                      title: 'Best cities',
+                      subtitle: 'City livability rankings',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const CitiesPage())),
+                    ),
+                  ]),
               ChartsPage(
                   key: ValueKey('polls${catalog.length}'),
                   title: 'Polls',
@@ -165,6 +184,18 @@ class _HomeShellState extends State<HomeShell> {
               },
             ),
             ListTile(
+              leading: Icon(Icons.bubble_chart_outlined,
+                  color: kAmber, size: 22),
+              title: Text('Animated bubbles',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600, color: kText)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const BubblePage()));
+              },
+            ),
+            ListTile(
               leading:
                   Icon(Icons.extension_outlined, color: kAmber, size: 22),
               title: Text('Country Quiz',
@@ -213,7 +244,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.19.0',
+                  applicationVersion: '1.20.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -785,3 +816,49 @@ class _StatBox extends StatelessWidget {
   }
 }
 
+
+/// A tappable entry card for the Biz tab (Top brands / Best cities).
+class _BizEntryCard extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _BizEntryCard(
+      {required this.emoji,
+      required this.title,
+      required this.subtitle,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(subtitle,
+                        style: TextStyle(fontSize: 12, color: kTextDim)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: kTextDim, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
