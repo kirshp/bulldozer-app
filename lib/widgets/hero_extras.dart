@@ -56,8 +56,12 @@ class BrandPodium extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         color: kAmber)),
                 const SizedBox(height: 4),
-                Container(
-                  height: heights[i],
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: heights[i]),
+                  duration: Duration(milliseconds: 500 + i * 120),
+                  curve: Curves.easeOutBack,
+                  builder: (_, hgt, _) => Container(
+                  height: hgt,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                         colors: [
@@ -72,6 +76,7 @@ class BrandPodium extends StatelessWidget {
                   alignment: Alignment.topCenter,
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(medals[i], style: const TextStyle(fontSize: 18)),
+                ),
                 ),
               ],
             ),
@@ -107,8 +112,14 @@ class GaugeHero extends StatelessWidget {
         SizedBox(
           height: 110,
           width: 200,
-          child: CustomPaint(
-            painter: _GaugePainter(avg / 100),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: avg / 100),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            builder: (_, t, child) => CustomPaint(
+              painter: _GaugePainter(t),
+              child: child,
+            ),
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Column(

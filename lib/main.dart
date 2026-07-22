@@ -15,6 +15,7 @@ import 'flags.dart';
 import 'notify.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
+import 'widgets/entrance.dart';
 import 'widgets/globe.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
@@ -248,7 +249,7 @@ class _HomeShellState extends State<HomeShell> {
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.26.1',
+                  applicationVersion: '1.27.0',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
@@ -540,7 +541,7 @@ class _HomePageState extends State<HomePage> {
         brandTagline,
         const SizedBox(height: 16),
         // Featured data story — the happiness ranking as a world map.
-        HeroShell(
+        FadeIn(child: HeroShell(
           tag: 'Featured · World Happiness Report',
           title: _happyTop.isEmpty
               ? 'The world’s happiest countries'
@@ -585,10 +586,10 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(fontSize: 11, color: kTextDim)),
                   ],
                 ),
-        ),
+        )),
         const SizedBox(height: 10),
         // Country quiz entry — a bright amber strip so it pops off the feed.
-        Material(
+        FadeIn(delayMs: 90, child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => openQuiz(context),
@@ -642,9 +643,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-        ),
+        )),
         const SizedBox(height: 16),
-        Row(
+        FadeIn(delayMs: 180, child: Row(
           children: [
             _StatBox(value: '${catalog.length}', label: 'indicators'),
             const SizedBox(width: 8),
@@ -652,7 +653,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 8),
             const _StatBox(value: '190+', label: 'countries'),
           ],
-        ),
+        )),
         // Starred countries & indicators — shown once anything is starred.
         ValueListenableBuilder(
           valueListenable: favoritesNotifier,
@@ -872,9 +873,17 @@ class _StatBox extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: kAmber)),
+            // count up 0 → value; keep any non-numeric suffix ("190+")
+            Builder(builder: (_) {
+              final mNum = RegExp(r'^(\d+)(.*)\$').firstMatch(value);
+              final style = TextStyle(
+                  fontSize: 20, fontWeight: FontWeight.w800, color: kAmber);
+              if (mNum == null) return Text(value, style: style);
+              return CountUp(
+                  value: int.parse(mNum.group(1)!),
+                  suffix: mNum.group(2)!,
+                  style: style);
+            }),
             Text(label,
                 style: TextStyle(fontSize: 11, color: kTextDim)),
           ],

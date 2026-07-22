@@ -7,6 +7,7 @@ import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
+import 'widgets/entrance.dart';
 import 'widgets/featured_card.dart';
 import 'brands_page.dart';
 import 'cultural_map_page.dart';
@@ -376,7 +377,7 @@ class _ChartsPageState extends State<ChartsPage> {
                 if (showFeatured && idx == topN) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-                    child: _buildHero(featEntry),
+                    child: FadeIn(child: _buildHero(featEntry)),
                   );
                 }
                 final e = shown[idx - headers];

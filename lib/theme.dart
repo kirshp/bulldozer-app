@@ -52,6 +52,7 @@ void toggleTheme() {
 ThemeData buildTheme() {
   final base = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Inter', // same face as the site
     brightness: isLight ? Brightness.light : Brightness.dark,
     scaffoldBackgroundColor: kBg,
     colorScheme: ColorScheme.fromSeed(
