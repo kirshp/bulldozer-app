@@ -109,7 +109,7 @@ class _ChartsPageState extends State<ChartsPage> {
   Future<void> _loadRecords() async {
     // shuffle the whole pool on every visit — 7 facts, fresh order each time
     final picks = [..._recordPool]..shuffle();
-    picks.length = 7;
+    picks.length = 5;
     final out = <RecordFact>[];
     for (final p in picks) {
       try {
